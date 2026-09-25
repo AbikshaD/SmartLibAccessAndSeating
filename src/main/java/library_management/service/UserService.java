@@ -3,6 +3,7 @@ package library_management.service;
 import java.util.List;
 
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import library_management.exception.DuplicateEmailException;
@@ -14,13 +15,17 @@ import library_management.repository.UserRepository;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public User createUser(User user) {
         normalizeEmail(user);
+        normalizeRole(user);
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         ensureEmailIsAvailable(user.getEmail(), null);
         try {
             return userRepository.save(user);
@@ -47,7 +52,10 @@ public class UserService {
         existingUser.setStudentId(updatedUser.getStudentId());
         existingUser.setName(updatedUser.getName());
         existingUser.setEmail(updatedUser.getEmail());
-        existingUser.setPassword(updatedUser.getPassword());
+        if (updatedUser.getPassword() != null && !updatedUser.getPassword().isBlank()) {
+            existingUser.setPassword(passwordEncoder.encode(updatedUser.getPassword()));
+        }
+        normalizeRole(updatedUser);
         existingUser.setRole(updatedUser.getRole());
 
         try {
@@ -72,5 +80,10 @@ public class UserService {
 
     private void normalizeEmail(User user) {
         user.setEmail(user.getEmail().trim().toLowerCase());
+    }
+
+    private void normalizeRole(User user) {
+        String role = user.getRole();
+        user.setRole(role == null || role.isBlank() ? "STUDENT" : role.trim().toUpperCase());
     }
 }

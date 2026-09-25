@@ -1,5 +1,6 @@
 package library_management.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -26,9 +27,9 @@ public class User {
 
     @NotBlank
     @Size(min = 8, max = 100)
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 
-    @NotBlank
     private String role;
 
     public String getId() {

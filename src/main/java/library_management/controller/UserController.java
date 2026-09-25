@@ -5,6 +5,7 @@ import java.util.List;
 
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,6 +30,14 @@ public class UserController {
 
 	@PostMapping
 	public ResponseEntity<User> createUser(@Valid @RequestBody User user) {
+		user.setRole("STUDENT");
+		User createdUser = userService.createUser(user);
+		return ResponseEntity.created(URI.create("/users/" + createdUser.getId())).body(createdUser);
+	}
+
+	@PostMapping("/admin")
+	public ResponseEntity<User> createAdmin(@Valid @RequestBody User user) {
+		user.setRole("ADMIN");
 		User createdUser = userService.createUser(user);
 		return ResponseEntity.created(URI.create("/users/" + createdUser.getId())).body(createdUser);
 	}
@@ -39,6 +48,7 @@ public class UserController {
 	}
 
 	@GetMapping("/{id}")
+	@PreAuthorize("hasRole('ADMIN') or #id == authentication.name")
 	public ResponseEntity<User> getUserById(@PathVariable String id) {
 		return ResponseEntity.ok(userService.getUserById(id));
 	}
