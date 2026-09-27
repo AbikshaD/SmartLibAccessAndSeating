@@ -28,10 +28,15 @@ public class SecurityConfig {
                 .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .authorizeHttpRequests(auth -> auth
                     .requestMatchers("/auth/**").permitAll()
-                    .requestMatchers(HttpMethod.POST, "/users/admin").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/users/admin").hasRole("ADMIN")
                     .requestMatchers(HttpMethod.POST, "/users").permitAll()
                     .requestMatchers(HttpMethod.GET, "/users").hasRole("ADMIN")
                     .requestMatchers("/users/**").authenticated()
+                    .requestMatchers(HttpMethod.POST, "/seats").hasRole("ADMIN")
+                    .requestMatchers(HttpMethod.PUT, "/seats/**").hasRole("ADMIN")
+                    .requestMatchers(HttpMethod.DELETE, "/seats/**").hasRole("ADMIN")
+                    .requestMatchers(HttpMethod.GET, "/seats", "/seats/**").hasAnyRole("STUDENT", "ADMIN")
+                    .requestMatchers("/seats/**").denyAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

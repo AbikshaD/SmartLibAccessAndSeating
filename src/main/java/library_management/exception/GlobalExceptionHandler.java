@@ -17,6 +17,16 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.NOT_FOUND, exception.getMessage());
     }
 
+    @ExceptionHandler(SeatNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleSeatNotFound(SeatNotFoundException exception) {
+        return error(HttpStatus.NOT_FOUND, exception.getMessage());
+    }
+
+    @ExceptionHandler(SeatOccupiedException.class)
+    public ResponseEntity<Map<String, String>> handleSeatOccupied(SeatOccupiedException exception) {
+        return error(HttpStatus.CONFLICT, exception.getMessage());
+    }
+
     @ExceptionHandler(DuplicateEmailException.class)
     public ResponseEntity<Map<String, String>> handleDuplicateEmail(DuplicateEmailException exception) {
         return error(HttpStatus.CONFLICT, exception.getMessage());
