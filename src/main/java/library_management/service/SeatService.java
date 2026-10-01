@@ -36,7 +36,7 @@ public class SeatService {
     }
 
     public Seat getSeatById(String id) {
-        return SeatRepository.findBySeatId(id);
+        return findSeat(id);
     }
 
     public Seat updateSeat(String id, Seat updatedSeat) {

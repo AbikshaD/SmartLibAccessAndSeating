@@ -1,7 +1,9 @@
 package library_management;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -70,6 +72,24 @@ class AuthenticationAuthorizationTests {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(loginJson(studentId, "wrong-pass")))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void corsPreflightFromLocalFrontendIsAllowed() throws Exception {
+        mockMvc.perform(options("/auth/login")
+                        .header("Origin", "http://localhost:5173")
+                        .header("Access-Control-Request-Method", "POST")
+                        .header("Access-Control-Request-Headers", "content-type,authorization"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:5173"));
+
+        mockMvc.perform(options("/auth/login")
+                .header("Origin", "https://friend-frontend.ngrok-free.dev")
+                .header("Access-Control-Request-Method", "POST")
+                .header("Access-Control-Request-Headers", "content-type,authorization"))
+            .andExpect(status().isOk())
+            .andExpect(header().string("Access-Control-Allow-Origin",
+                "https://friend-frontend.ngrok-free.dev"));
     }
 
     @Test
