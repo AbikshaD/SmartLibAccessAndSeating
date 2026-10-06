@@ -2,7 +2,9 @@ package library_management.service;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Set;
 
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.domain.Sort;
@@ -11,21 +13,27 @@ import org.springframework.data.mongodb.core.index.Index;
 import org.springframework.stereotype.Service;
 
 import library_management.exception.DuplicateSeatGenerationException;
+import library_management.exception.FloorCapacityConflictException;
 import library_management.exception.InvalidFloorException;
 import library_management.exception.SeatNotFoundException;
 import library_management.exception.SeatAlreadyBookedException;
 import library_management.exception.SeatOccupiedException;
+import library_management.model.FloorCapacity;
 import library_management.model.Seat;
+import library_management.repository.FloorCapacityRepository;
 import library_management.repository.SeatRepository;
 
 @Service
 public class SeatService {
 
     private final SeatRepository seatRepository;
+    private final FloorCapacityRepository floorCapacityRepository;
     private final MongoTemplate mongoTemplate;
 
-    public SeatService(SeatRepository seatRepository, MongoTemplate mongoTemplate) {
+    public SeatService(SeatRepository seatRepository, FloorCapacityRepository floorCapacityRepository,
+            MongoTemplate mongoTemplate) {
         this.seatRepository = seatRepository;
+        this.floorCapacityRepository = floorCapacityRepository;
         this.mongoTemplate = mongoTemplate;
         mongoTemplate.indexOps(Seat.class).createIndex(new Index()
                 .on("floor", Sort.Direction.ASC)
@@ -71,6 +79,50 @@ public class SeatService {
         } catch (DuplicateKeyException exception) {
             throw new DuplicateSeatGenerationException(floor, "generated range");
         }
+    }
+
+    public FloorCapacityResult setFloorCapacity(String requestedFloor, int maxSeats) {
+        String floor = normalizeFloor(requestedFloor);
+        List<Seat> existingSeats = seatRepository.findByFloorIgnoreCase(floor);
+        if (existingSeats.size() > maxSeats) {
+            throw new FloorCapacityConflictException(floor, existingSeats.size(), maxSeats);
+        }
+
+        String prefix = floorPrefix(floor);
+        List<Seat> generatedSeats = new ArrayList<>(maxSeats - existingSeats.size());
+        Set<String> existingSeatNumbers = new HashSet<>();
+        existingSeats.stream().map(Seat::getSeatNumber).forEach(existingSeatNumbers::add);
+        for (int seatIndex = 1; seatIndex <= 500 && existingSeats.size() + generatedSeats.size() < maxSeats;
+                seatIndex++) {
+            String seatNumber = prefix + "-%02d".formatted(seatIndex);
+            if (existingSeatNumbers.contains(seatNumber)) {
+                continue;
+            }
+
+            Seat seat = new Seat();
+            seat.setFloor(floor);
+            seat.setSeatNumber(seatNumber);
+            seat.setStatus(Seat.Status.AVAILABLE);
+            generatedSeats.add(seat);
+        }
+
+        List<Seat> savedSeats;
+        try {
+            savedSeats = generatedSeats.isEmpty() ? List.of() : seatRepository.saveAll(generatedSeats);
+        } catch (DuplicateKeyException exception) {
+            throw new DuplicateSeatGenerationException(floor, "generated range");
+        }
+
+        FloorCapacity capacity = new FloorCapacity();
+        capacity.setFloor(floor);
+        capacity.setMaxSeats(maxSeats);
+        floorCapacityRepository.save(capacity);
+
+        return new FloorCapacityResult(floor, maxSeats, existingSeats.size() + savedSeats.size(), savedSeats);
+    }
+
+    public List<FloorCapacity> getFloorCapacities() {
+        return floorCapacityRepository.findAll();
     }
 
     public List<Seat> getAllSeats() {
@@ -159,4 +211,6 @@ public class SeatService {
             default -> throw new InvalidFloorException(floor);
         };
     }
+
+    public record FloorCapacityResult(String floor, int maxSeats, int totalSeats, List<Seat> createdSeats) { }
 }

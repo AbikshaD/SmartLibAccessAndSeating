@@ -568,6 +568,98 @@ select:focus {
   padding: 12px 14px;
 }
 
+.success-message {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 10px;
+  color: #047857;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.success-icon {
+  flex-shrink: 0;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.section-header h2 {
+  margin: 0;
+}
+
+.section-header svg {
+  color: #3b82f6;
+}
+
+.section-description {
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin: 0 0 20px 0;
+}
+
+.capacity-section {
+  margin-bottom: 24px;
+}
+
+.capacity-list {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.capacity-list h3 {
+  margin: 0 0 12px 0;
+  font-size: 0.95rem;
+  color: #374151;
+}
+
+.capacity-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.capacity-card {
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 16px;
+  text-align: center;
+}
+
+.capacity-floor {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+
+.capacity-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+}
+
+.capacity-max {
+  color: #3b82f6;
+  font-weight: 500;
+}
+
+.capacity-total {
+  color: #6b7280;
+}
+
 .loading-card {
   display: flex;
   align-items: center;

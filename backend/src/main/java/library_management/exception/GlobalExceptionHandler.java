@@ -28,7 +28,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler({SeatAlreadyBookedException.class, DuplicateSeatGenerationException.class,
-            BookingCannotBeCancelledException.class})
+            BookingCannotBeCancelledException.class, FloorCapacityConflictException.class})
     public ResponseEntity<Map<String, String>> handleBookingConflict(RuntimeException exception) {
         return error(HttpStatus.CONFLICT, exception.getMessage());
     }

@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.validation.annotation.Validated;
 
 import library_management.model.Seat;
+import library_management.model.FloorCapacity;
 import library_management.service.SeatService;
 
 @RestController
@@ -39,6 +40,19 @@ public class SeatController {
     public ResponseEntity<List<Seat>> generateSeats(@Valid @RequestBody GenerateSeatsRequest request) {
         List<Seat> generatedSeats = seatService.generateSeats(request.floor(), request.numberOfSeats());
         return ResponseEntity.status(201).body(generatedSeats);
+    }
+
+    @PutMapping("/capacity")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<SeatService.FloorCapacityResult> setFloorCapacity(
+            @Valid @RequestBody SetFloorCapacityRequest request) {
+        return ResponseEntity.ok(seatService.setFloorCapacity(request.floor(), request.maxSeats()));
+    }
+
+    @GetMapping("/capacity")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<FloorCapacity>> getFloorCapacities() {
+        return ResponseEntity.ok(seatService.getFloorCapacities());
     }
 
     @PostMapping
@@ -87,4 +101,8 @@ public class SeatController {
     public record GenerateSeatsRequest(
             @NotBlank String floor,
             @Min(1) @Max(500) int numberOfSeats) { }
+
+    public record SetFloorCapacityRequest(
+            @NotBlank String floor,
+            @Min(1) @Max(500) int maxSeats) { }
 }

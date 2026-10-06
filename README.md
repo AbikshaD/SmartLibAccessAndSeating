@@ -39,6 +39,19 @@ The frontend reads the backend URL from `VITE_API_URL` in the frontend `.env` fi
 - `/admin/seats`
 - `/access-denied`
 
+## Seat capacity API
+
+Admins can set the maximum seat count for a supported floor with `PUT /seats/capacity`:
+
+```json
+{
+  "floor": "GROUND",
+  "maxSeats": 50
+}
+```
+
+The API persists that floor's capacity and creates any missing seats up to the requested total. Repeating the same capacity does not create duplicates. Capacity values must be between 1 and 500; reducing a floor below its current seat count returns `409 Conflict`. Admins can list saved capacities with `GET /seats/capacity`.
+
 ## Authentication flow
 
 - User submits `studentId` and `password` to `POST /auth/login`.

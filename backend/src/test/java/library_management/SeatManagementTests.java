@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.hamcrest.Matchers.contains;
 
 import java.util.UUID;
 
@@ -21,6 +22,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import library_management.model.Seat;
+import library_management.repository.FloorCapacityRepository;
 import library_management.model.User;
 import library_management.repository.SeatRepository;
 import library_management.repository.UserRepository;
@@ -34,6 +36,9 @@ class SeatManagementTests {
 
     @Autowired
     private SeatRepository seatRepository;
+
+    @Autowired
+    private FloorCapacityRepository floorCapacityRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -63,8 +68,11 @@ class SeatManagementTests {
     void cleanUp() {
         seatRepository.findAll().stream()
                 .filter(seat -> seat.getSeatNumber().equals(seatNumber)
-                        || seat.getSeatNumber().equals("UPDATED-" + seatNumber))
+                        || seat.getSeatNumber().equals("UPDATED-" + seatNumber)
+                        || (seat.getFloor().equals("SECOND")
+                                && (seat.getSeatNumber().equals("S-01") || seat.getSeatNumber().equals("S-02"))))
                 .forEach(seatRepository::delete);
+        floorCapacityRepository.deleteById("SECOND");
         userRepository.findByStudentId(adminId).ifPresent(userRepository::delete);
         userRepository.findByStudentId(studentId).ifPresent(userRepository::delete);
     }
@@ -125,6 +133,59 @@ class SeatManagementTests {
         mockMvc.perform(delete("/seats/" + savedSeat.getId())
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isConflict());
+    }
+
+    @Test
+    void adminCanSetFloorCapacityAndSeatsAreCreatedUpToThatLimit() throws Exception {
+        mockMvc.perform(put("/seats/capacity")
+                        .header("Authorization", "Bearer " + studentToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"floor\":\"SECOND\",\"maxSeats\":2}"))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(put("/seats/capacity")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"floor\":\"SECOND\",\"maxSeats\":2}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.floor").value("SECOND"))
+                .andExpect(jsonPath("$.maxSeats").value(2))
+                .andExpect(jsonPath("$.totalSeats").value(2))
+                .andExpect(jsonPath("$.createdSeats.length()").value(2))
+                .andExpect(jsonPath("$.createdSeats[0].seatNumber").value("S-01"));
+
+        mockMvc.perform(put("/seats/capacity")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"floor\":\"SECOND\",\"maxSeats\":2}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalSeats").value(2))
+                .andExpect(jsonPath("$.createdSeats.length()").value(0));
+
+        mockMvc.perform(put("/seats/capacity")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"floor\":\"SECOND\",\"maxSeats\":1}"))
+                .andExpect(status().isConflict());
+
+        mockMvc.perform(get("/seats/capacity").header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.floor=='SECOND')].maxSeats").value(contains(2)));
+    }
+
+    @Test
+    void floorCapacityRejectsUnsupportedFloorAndInvalidMaximum() throws Exception {
+        mockMvc.perform(put("/seats/capacity")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"floor\":\"ROOFTOP\",\"maxSeats\":2}"))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(put("/seats/capacity")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"floor\":\"FIRST\",\"maxSeats\":501}"))
+                .andExpect(status().isBadRequest());
     }
 
     private void saveUser(String id, String role) {
