@@ -3,7 +3,7 @@ const formatStatus = (status) => {
   return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
 };
 
-export default function SeatCard({ seat, onEdit, onDelete, isAdmin = false }) {
+export default function SeatCard({ seat, onEdit, onDelete, onBook, isAdmin = false }) {
   const isAvailable = seat?.status === 'AVAILABLE';
 
   return (
@@ -36,6 +36,19 @@ export default function SeatCard({ seat, onEdit, onDelete, isAdmin = false }) {
           </button>
           <button type="button" className="danger" onClick={() => onDelete(seat)}>
             Delete
+          </button>
+        </div>
+      )}
+
+      {onBook && (
+        <div className="card-actions">
+          <button
+            type="button"
+            className="primary-button seat-book-button"
+            onClick={() => onBook(seat)}
+            disabled={!isAvailable}
+          >
+            {isAvailable ? 'Book this seat' : 'Unavailable'}
           </button>
         </div>
       )}

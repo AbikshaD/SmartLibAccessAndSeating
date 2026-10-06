@@ -1,6 +1,6 @@
 import SeatCard from './SeatCard';
 
-export default function SeatGrid({ seats, onEdit, onDelete, isAdmin = false }) {
+export default function SeatGrid({ seats, onEdit, onDelete, onBook, isAdmin = false }) {
   if (!seats || seats.length === 0) {
     return <div className="empty-state">No seats match the current filter.</div>;
   }
@@ -13,6 +13,7 @@ export default function SeatGrid({ seats, onEdit, onDelete, isAdmin = false }) {
           seat={seat}
           onEdit={onEdit}
           onDelete={onDelete}
+          onBook={onBook}
           isAdmin={isAdmin}
         />
       ))}
