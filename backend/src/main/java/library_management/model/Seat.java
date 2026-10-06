@@ -3,14 +3,17 @@ package library_management.model;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document(collection = "seats")
+@CompoundIndex(name = "floor_seat_number_unique", def = "{'floor': 1, 'seatNumber': 1}", unique = true)
 public class Seat {
 
     public enum Status {
         AVAILABLE,
-        OCCUPIED
+        OCCUPIED,
+        BOOKED
     }
 
     @Id
