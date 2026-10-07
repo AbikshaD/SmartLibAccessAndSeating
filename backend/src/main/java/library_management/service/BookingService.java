@@ -1,6 +1,7 @@
 package library_management.service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
@@ -92,6 +93,43 @@ public class BookingService {
 
     public List<Booking> getAllBookings() {
         return bookingRepository.findAll();
+    }
+
+    public int completeExpiredBookings() {
+        LocalDateTime now = LocalDateTime.now();
+        Criteria expiredBookingTime = new Criteria().orOperator(
+                Criteria.where("bookingDate").lt(now.toLocalDate()),
+                new Criteria().andOperator(
+                        Criteria.where("bookingDate").is(now.toLocalDate()),
+                        Criteria.where("endTime").lte(now.toLocalTime())));
+        Query expiredBookingsQuery = Query.query(new Criteria().andOperator(
+                Criteria.where("status").is(Booking.Status.CONFIRMED),
+                expiredBookingTime));
+
+        List<Booking> expiredBookings = mongoTemplate.find(expiredBookingsQuery, Booking.class);
+        int completedCount = 0;
+        for (Booking booking : expiredBookings) {
+            Booking completed = mongoTemplate.findAndModify(
+                    Query.query(Criteria.where("_id").is(booking.getId())
+                            .and("status").is(Booking.Status.CONFIRMED)),
+                    new Update().set("status", Booking.Status.COMPLETED),
+                    FindAndModifyOptions.options().returnNew(true),
+                    Booking.class);
+            if (completed == null) {
+                continue;
+            }
+
+            Criteria seatCriteria = booking.getSeatDocumentId() != null
+                    ? Criteria.where("_id").is(booking.getSeatDocumentId())
+                    : Criteria.where("seatNumber").is(booking.getSeatNumber())
+                            .and("floor").is(booking.getFloor());
+            mongoTemplate.updateFirst(
+                    Query.query(seatCriteria.and("status").is(Seat.Status.BOOKED)),
+                    new Update().set("status", Seat.Status.AVAILABLE),
+                    Seat.class);
+            completedCount++;
+        }
+        return completedCount;
     }
 
     public Booking getBooking(String bookingId, String requesterId, boolean admin) {

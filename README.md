@@ -52,6 +52,8 @@ Admins can set the maximum seat count for a supported floor with `PUT /seats/cap
 
 The API persists that floor's capacity and creates any missing seats up to the requested total. Repeating the same capacity does not create duplicates. Capacity values must be between 1 and 500; reducing a floor below its current seat count returns `409 Conflict`. Admins can list saved capacities with `GET /seats/capacity`.
 
+When a confirmed booking's end time passes, the backend marks it `COMPLETED` and makes its seat available again. Expiry is checked automatically every 10 seconds.
+
 ## Authentication flow
 
 - User submits `studentId` and `password` to `POST /auth/login`.

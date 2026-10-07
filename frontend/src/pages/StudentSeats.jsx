@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Armchair, CalendarDays, CalendarPlus2, Clock3, MapPin, RefreshCw, X } from 'lucide-react';
+import { Armchair, CalendarDays, CalendarPlus2, Clock3, MapPin, RefreshCw, X, CheckCircle2, AlertCircle, Hourglass } from 'lucide-react';
 import { bookingApi } from '../api/bookingApi';
 import { seatApi } from '../api/seatApi';
 import { useAuth } from '../context/AuthContext';
@@ -24,6 +24,33 @@ const formatDate = (date) => {
 };
 
 const formatTime = (time) => (time ? time.slice(0, 5) : '--:--');
+
+const getBookingStatus = (booking) => {
+  if (booking.status === 'COMPLETED') return 'completed';
+  if (booking.status === 'CANCELLED') return 'cancelled';
+  if (booking.status === 'CONFIRMED') return 'active';
+  return 'unknown';
+};
+
+const getTimeRemaining = (bookingDate, endTime) => {
+  const today = new Date();
+  const bookingDateObj = new Date(`${bookingDate}T${endTime}:00`);
+  const diffMs = bookingDateObj - today;
+  const diffMins = Math.floor(diffMs / 60000);
+  
+  if (diffMins < 0) return null;
+  if (diffMins < 1) return 'ending soon';
+  if (diffMins < 60) return `${diffMins}m left`;
+  const hours = Math.floor(diffMins / 60);
+  const mins = diffMins % 60;
+  return `${hours}h ${mins}m left`;
+};
+
+const isBookingExpired = (bookingDate, endTime) => {
+  const today = new Date();
+  const bookingDateObj = new Date(`${bookingDate}T${endTime}:00`);
+  return bookingDateObj < today;
+};
 
 export default function StudentSeats() {
   const { role } = useAuth();
@@ -79,6 +106,7 @@ export default function StudentSeats() {
 
   const availableCount = seats.filter((seat) => seat.status === 'AVAILABLE').length;
   const confirmedBookings = bookings.filter((booking) => booking.status === 'CONFIRMED');
+  const completedBookings = bookings.filter((booking) => booking.status === 'COMPLETED');
 
   const refresh = async () => {
     setError('');
@@ -184,10 +212,16 @@ export default function StudentSeats() {
           <strong>{availableCount}</strong>
         </div>
         {isStudent && (
-          <div className="stat-card">
-            <span><CalendarDays size={15} /> Active bookings</span>
-            <strong>{confirmedBookings.length}</strong>
-          </div>
+          <>
+            <div className="stat-card">
+              <span><CalendarDays size={15} /> Active bookings</span>
+              <strong>{confirmedBookings.length}</strong>
+            </div>
+            <div className="stat-card">
+              <span><CheckCircle2 size={15} /> Completed</span>
+              <strong>{completedBookings.length}</strong>
+            </div>
+          </>
         )}
       </section>
 
@@ -206,15 +240,27 @@ export default function StudentSeats() {
           ) : (
             <div className="booking-list">
               {bookings.map((booking) => {
+                const status = getBookingStatus(booking);
+                const timeRemaining = getTimeRemaining(booking.bookingDate, booking.endTime);
+                const isExpired = isBookingExpired(booking.bookingDate, booking.endTime);
                 const isConfirmed = booking.status === 'CONFIRMED';
+                
                 return (
-                  <article className="booking-item" key={booking.id}>
-                    <div className="booking-seat-icon"><Armchair size={20} /></div>
+                  <article className={`booking-item booking-item-${status}`} key={booking.id}>
+                    <div className="booking-seat-icon">
+                      {status === 'completed' ? (
+                        <CheckCircle2 size={20} />
+                      ) : status === 'cancelled' ? (
+                        <AlertCircle size={20} />
+                      ) : (
+                        <Armchair size={20} />
+                      )}
+                    </div>
                     <div className="booking-details">
                       <div className="booking-title-row">
                         <h3>Seat {booking.seatNumber || booking.seatId}</h3>
-                        <span className={`badge ${isConfirmed ? 'success' : 'muted'}`}>
-                          {booking.status === 'CANCELLED' ? 'Cancelled' : booking.status}
+                        <span className={`badge badge-${status}`}>
+                          {status === 'completed' ? 'Completed' : status === 'cancelled' ? 'Cancelled' : 'Active'}
                         </span>
                       </div>
                       <div className="booking-meta">
@@ -222,6 +268,19 @@ export default function StudentSeats() {
                         <span><CalendarDays size={14} /> {formatDate(booking.bookingDate)}</span>
                         <span><Clock3 size={14} /> {formatTime(booking.startTime)}–{formatTime(booking.endTime)}</span>
                       </div>
+                      {isConfirmed && timeRemaining && (
+                        <div className="booking-expiry-info">
+                          <Hourglass size={13} />
+                          <span className={isExpired || timeRemaining === 'ending soon' ? 'expiring' : ''}>
+                            {timeRemaining}
+                          </span>
+                        </div>
+                      )}
+                      {status === 'completed' && (
+                        <div className="booking-completed-info">
+                          Your slot has ended. The seat is now available for other students.
+                        </div>
+                      )}
                     </div>
                     {isConfirmed && (
                       <button

@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.UUID;
 
 import org.junit.jupiter.api.AfterEach;
@@ -21,11 +22,13 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import library_management.model.Booking;
 import library_management.model.Seat;
 import library_management.model.User;
 import library_management.repository.BookingRepository;
 import library_management.repository.SeatRepository;
 import library_management.repository.UserRepository;
+import library_management.service.BookingService;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -39,6 +42,9 @@ class BookingManagementTests {
 
     @Autowired
     private BookingRepository bookingRepository;
+
+    @Autowired
+    private BookingService bookingService;
 
     @Autowired
     private UserRepository userRepository;
@@ -150,6 +156,31 @@ class BookingManagementTests {
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("CANCELLED"));
+    }
+
+    @Test
+    void expiredBookingCompletesAndReleasesItsSeat() {
+        testSeat.setStatus(Seat.Status.BOOKED);
+        seatRepository.save(testSeat);
+
+        Booking booking = new Booking();
+        booking.setStudentId(studentId);
+        booking.setSeatId(testSeat.getSeatNumber());
+        booking.setSeatDocumentId(testSeat.getId());
+        booking.setSeatNumber(testSeat.getSeatNumber());
+        booking.setFloor(testSeat.getFloor());
+        booking.setBookingDate(LocalDate.now());
+        booking.setStartTime(LocalTime.now().minusHours(1));
+        booking.setEndTime(LocalTime.now().minusMinutes(1));
+        booking.setStatus(Booking.Status.CONFIRMED);
+        booking = bookingRepository.save(booking);
+
+        org.junit.jupiter.api.Assertions.assertEquals(1, bookingService.completeExpiredBookings());
+        org.junit.jupiter.api.Assertions.assertEquals(Booking.Status.COMPLETED,
+                bookingRepository.findById(booking.getId()).orElseThrow().getStatus());
+        org.junit.jupiter.api.Assertions.assertEquals(Seat.Status.AVAILABLE,
+                seatRepository.findById(testSeat.getId()).orElseThrow().getStatus());
+        org.junit.jupiter.api.Assertions.assertEquals(0, bookingService.completeExpiredBookings());
     }
 
     @Test

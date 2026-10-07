@@ -12,7 +12,8 @@ public class Booking {
 
     public enum Status {
         CONFIRMED,
-        CANCELLED
+        CANCELLED,
+        COMPLETED
     }
 
     @Id
