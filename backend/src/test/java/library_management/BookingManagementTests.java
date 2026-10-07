@@ -1,11 +1,5 @@
 package library_management;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.UUID;
@@ -18,10 +12,18 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import library_management.model.Booking;
 import library_management.model.Seat;
 import library_management.model.User;
@@ -33,6 +35,14 @@ import library_management.service.BookingService;
 @SpringBootTest
 @AutoConfigureMockMvc
 class BookingManagementTests {
+
+        private static final String TEST_DATABASE = "booking_tests_"
+                        + UUID.randomUUID().toString().replace("-", "");
+
+        @DynamicPropertySource
+        static void configureMongoDatabase(DynamicPropertyRegistry registry) {
+                registry.add("spring.mongodb.database", () -> TEST_DATABASE);
+        }
 
     @Autowired
     private MockMvc mockMvc;

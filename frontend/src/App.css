@@ -559,6 +559,257 @@ select:focus {
   color: #64748b;
 }
 
+.feedback-form-panel {
+  max-width: 900px;
+}
+
+.feedback-section-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 18px;
+  color: #2563eb;
+}
+
+.feedback-section-heading h2 {
+  margin: 5px 0 0;
+  color: #0f172a;
+  font-size: 1.18rem;
+}
+
+.rating-fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.rating-fieldset legend {
+  margin-bottom: 8px;
+  color: #475569;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.rating-options {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.rating-option {
+  display: flex;
+  flex-direction: column;
+  min-height: 76px;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: 1px solid #dfe7f3;
+  border-radius: 10px;
+  background: #fff;
+  color: #0f172a;
+  font: inherit;
+  cursor: pointer;
+  padding: 8px 4px;
+}
+
+.rating-option strong {
+  color: #0f172a;
+  font-size: 1rem;
+}
+
+.rating-option span {
+  color: #64748b;
+  font-size: 0.72rem;
+  text-align: center;
+}
+
+.rating-option.selected {
+  border-color: #2563eb;
+  background: #eff6ff;
+  box-shadow: inset 0 0 0 1px #2563eb;
+}
+
+.rating-option:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 2px;
+}
+
+.stack-form textarea,
+.feedback-item textarea {
+  width: 100%;
+  resize: vertical;
+  border: 1px solid #dfe7f3;
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: #0f172a;
+  background: white;
+}
+
+.stack-form textarea:focus,
+.feedback-item textarea:focus {
+  outline: 2px solid rgba(59, 130, 246, 0.2);
+  border-color: #60a5fa;
+}
+
+.field-hint {
+  align-self: flex-end;
+  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+.feedback-history {
+  display: grid;
+  gap: 14px;
+}
+
+.feedback-admin-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.feedback-list {
+  display: grid;
+  gap: 14px;
+}
+
+.feedback-item {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid #dfe7f3;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.04);
+}
+
+.feedback-item-top,
+.feedback-item-title,
+.feedback-item-actions,
+.feedback-admin-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.feedback-item-top {
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.feedback-item-title {
+  flex-wrap: wrap;
+}
+
+.feedback-category {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.feedback-status {
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.status-pending {
+  color: #92400e;
+  background: #fef3c7;
+}
+
+.status-reviewed {
+  color: #1d4ed8;
+  background: #dbeafe;
+}
+
+.status-resolved {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.feedback-date,
+.feedback-admin-meta {
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+.feedback-rating {
+  margin-top: 12px;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.feedback-rating span {
+  margin-left: 7px;
+  color: #64748b;
+  font-size: 0.82rem;
+  font-weight: 400;
+}
+
+.feedback-comment {
+  margin: 10px 0 0;
+  color: #334155;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.admin-response {
+  margin-top: 15px;
+  padding: 12px 14px;
+  border-left: 3px solid #2563eb;
+  border-radius: 0 8px 8px 0;
+  background: #eff6ff;
+}
+
+.admin-response p {
+  margin: 5px 0 0;
+  color: #1e3a8a;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.feedback-admin-meta {
+  margin-top: 12px;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+
+.feedback-admin-meta strong {
+  margin-right: 5px;
+  color: #334155;
+}
+
+.admin-feedback-item > label {
+  margin-top: 16px;
+}
+
+.feedback-item-actions {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.feedback-item-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.feedback-delete-button {
+  padding: 8px 12px;
+  font-size: 0.82rem;
+}
+
+.feedback-item-actions button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
 .icon-button {
   width: 38px;
   height: 38px;
@@ -814,6 +1065,24 @@ th {
   .booking-item {
     align-items: flex-start;
     flex-wrap: wrap;
+  }
+
+  .rating-options {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 5px;
+  }
+
+  .rating-option {
+    min-height: 68px;
+    padding: 6px 2px;
+  }
+
+  .rating-option span {
+    font-size: 0.62rem;
+  }
+
+  .feedback-item {
+    padding: 16px;
   }
 
   .booking-details {

@@ -1,4 +1,4 @@
-import { Armchair, BarChart3, LayoutGrid, LogOut, ShieldCheck, UserRound, Users } from 'lucide-react';
+import { Armchair, BarChart3, LayoutGrid, LogOut, MessageSquareText, ShieldCheck, UserRound, Users } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -6,17 +6,21 @@ const studentLinks = [
   { to: '/student', label: 'Dashboard', icon: LayoutGrid },
   { to: '/student/seats', label: 'Seats', icon: Armchair },
   { to: '/student/profile', label: 'Profile', icon: UserRound },
+  { to: '/student/feedback', label: 'Feedback', icon: MessageSquareText },
 ];
 
 const adminLinks = [
   { to: '/admin', label: 'Dashboard', icon: BarChart3 },
   { to: '/admin/users', label: 'Users', icon: Users },
   { to: '/admin/seats', label: 'Seats', icon: Armchair },
+  { to: '/admin/feedback', label: 'Feedback', icon: MessageSquareText },
 ];
 
 export default function Sidebar() {
   const { user, logout, role } = useAuth();
-  const links = role === 'ADMIN' ? [...studentLinks, ...adminLinks] : studentLinks;
+  const links = role === 'ADMIN'
+    ? [...studentLinks.filter(({ to }) => to !== '/student/feedback'), ...adminLinks]
+    : studentLinks;
 
   return (
     <aside className="sidebar">

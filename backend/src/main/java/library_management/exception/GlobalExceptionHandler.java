@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -38,6 +39,11 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.NOT_FOUND, exception.getMessage());
     }
 
+    @ExceptionHandler(FeedbackNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleFeedbackNotFound(FeedbackNotFoundException exception) {
+        return error(HttpStatus.NOT_FOUND, exception.getMessage());
+    }
+
     @ExceptionHandler({InvalidFloorException.class, InvalidBookingRequestException.class})
     public ResponseEntity<Map<String, String>> handleInvalidRequest(RuntimeException exception) {
         return error(HttpStatus.BAD_REQUEST, exception.getMessage());
@@ -46,6 +52,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UnauthorizedBookingAccessException.class)
     public ResponseEntity<Map<String, String>> handleUnauthorizedBookingAccess(
             UnauthorizedBookingAccessException exception) {
+        return error(HttpStatus.FORBIDDEN, exception.getMessage());
+    }
+
+    @ExceptionHandler(UnauthorizedFeedbackAccessException.class)
+    public ResponseEntity<Map<String, String>> handleUnauthorizedFeedbackAccess(
+            UnauthorizedFeedbackAccessException exception) {
         return error(HttpStatus.FORBIDDEN, exception.getMessage());
     }
 
@@ -61,6 +73,11 @@ public class GlobalExceptionHandler {
                 .map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage())
                 .orElse("Invalid input");
         return error(HttpStatus.BAD_REQUEST, message);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, String>> handleUnreadableRequest(HttpMessageNotReadableException exception) {
+        return error(HttpStatus.BAD_REQUEST, "Request body contains invalid or missing values.");
     }
 
     private ResponseEntity<Map<String, String>> error(HttpStatus status, String message) {
