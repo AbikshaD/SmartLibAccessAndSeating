@@ -1,6 +1,7 @@
 package library_management;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.UUID;
 
@@ -185,12 +186,25 @@ class BookingManagementTests {
         booking.setStatus(Booking.Status.CONFIRMED);
         booking = bookingRepository.save(booking);
 
-        org.junit.jupiter.api.Assertions.assertEquals(1, bookingService.completeExpiredBookings());
+        org.junit.jupiter.api.Assertions.assertEquals(1, bookingService.getMyBookings(studentId).size());
         org.junit.jupiter.api.Assertions.assertEquals(Booking.Status.COMPLETED,
                 bookingRepository.findById(booking.getId()).orElseThrow().getStatus());
         org.junit.jupiter.api.Assertions.assertEquals(Seat.Status.AVAILABLE,
                 seatRepository.findById(testSeat.getId()).orElseThrow().getStatus());
         org.junit.jupiter.api.Assertions.assertEquals(0, bookingService.completeExpiredBookings());
+    }
+
+    @Test
+    void bookingCannotStartEarlierThanCurrentTimeOnTheSameDay() {
+        org.junit.jupiter.api.Assumptions.assumeTrue(LocalDateTime.now().isAfter(LocalDate.now().atStartOfDay()));
+        BookingService.CreateBookingRequest request = new BookingService.CreateBookingRequest(
+                testSeat.getSeatNumber(), LocalDate.now(), LocalTime.MIDNIGHT, LocalTime.of(23, 59));
+
+        org.junit.jupiter.api.Assertions.assertThrows(
+                library_management.exception.InvalidBookingRequestException.class,
+                () -> bookingService.createBooking(studentId, request));
+        org.junit.jupiter.api.Assertions.assertEquals(Seat.Status.AVAILABLE,
+                seatRepository.findById(testSeat.getId()).orElseThrow().getStatus());
     }
 
     @Test

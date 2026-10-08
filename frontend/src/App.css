@@ -496,31 +496,41 @@ select:focus {
   gap: 6px;
   margin-top: 8px;
   padding: 6px 10px;
-  background: #fef3c7;
+  background: #dcfce7;
   border-radius: 6px;
   font-size: 0.75rem;
   font-weight: 500;
+  color: #166534;
+}
+
+.booking-expiry-upcoming {
+  background: #fef3c7;
   color: #92400e;
 }
 
-.booking-expiry-info.expiring {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.booking-completed-info {
+.booking-expired-info {
   margin-top: 8px;
   padding: 8px 10px;
-  background: #ecfdf5;
+  background: #fee2e2;
   border-radius: 6px;
   font-size: 0.8rem;
-  color: #166534;
-  border-left: 3px solid #22c55e;
+  color: #991b1b;
+  border-left: 3px solid #ef4444;
 }
 
-.booking-item-completed {
+.booking-item-active {
   background: #f0fdf4;
   border-color: #bbf7d0;
+}
+
+.booking-item-upcoming {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.booking-item-expired {
+  background: #fef2f2;
+  border-color: #fecdd3;
 }
 
 .booking-item-cancelled {
@@ -529,9 +539,19 @@ select:focus {
   opacity: 0.8;
 }
 
-.booking-item-completed .booking-seat-icon {
+.booking-item-active .booking-seat-icon {
   background: #dcfce7;
   color: #22c55e;
+}
+
+.booking-item-upcoming .booking-seat-icon {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.booking-item-expired .booking-seat-icon {
+  background: #fee2e2;
+  color: #ef4444;
 }
 
 .booking-item-cancelled .booking-seat-icon {
@@ -540,13 +560,18 @@ select:focus {
 }
 
 .badge-active {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.badge-completed {
   background: #dcfce7;
   color: #166534;
+}
+
+.badge-upcoming {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.badge-expired {
+  background: #fecdd3;
+  color: #991b1b;
 }
 
 .badge-cancelled {

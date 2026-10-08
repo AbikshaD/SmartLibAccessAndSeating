@@ -1,7 +1,7 @@
 package library_management.service;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
@@ -37,7 +37,11 @@ public class BookingService {
     }
 
     public Booking createBooking(String studentId, CreateBookingRequest request) {
-        if (request.bookingDate().isBefore(LocalDate.now())) {
+        LocalDateTime bookingStart = LocalDateTime.of(request.bookingDate(), request.startTime());
+        if (!bookingStart.isAfter(LocalDateTime.now())) {
+            throw new InvalidBookingRequestException("Booking start time must be in the future.");
+        }
+        if (request.bookingDate().isBefore(LocalDateTime.now().toLocalDate())) {
             throw new InvalidBookingRequestException("bookingDate must be today or in the future.");
         }
         if (!request.startTime().isBefore(request.endTime())) {
@@ -88,10 +92,12 @@ public class BookingService {
     }
 
     public List<Booking> getMyBookings(String studentId) {
+        completeExpiredBookings();
         return bookingRepository.findByStudentIdOrderByBookingDateDesc(studentId);
     }
 
     public List<Booking> getAllBookings() {
+        completeExpiredBookings();
         return bookingRepository.findAll();
     }
 

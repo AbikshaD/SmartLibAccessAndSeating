@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Armchair, CalendarDays, CalendarPlus2, Clock3, MapPin, RefreshCw, X, CheckCircle2, AlertCircle, Hourglass } from 'lucide-react';
+import { Armchair, CalendarDays, CalendarPlus2, Clock3, MapPin, RefreshCw, X, AlertCircle, Hourglass } from 'lucide-react';
 import { bookingApi } from '../api/bookingApi';
 import { seatApi } from '../api/seatApi';
 import { useAuth } from '../context/AuthContext';
@@ -7,11 +7,33 @@ import ErrorMessage from '../components/ErrorMessage';
 import LoadingState from '../components/LoadingState';
 import SeatGrid from '../components/SeatGrid';
 
-const getToday = () => {
-  const today = new Date();
+const getToday = (today = new Date()) => {
   const offset = today.getTimezoneOffset();
   return new Date(today.getTime() - offset * 60_000).toISOString().slice(0, 10);
 };
+
+const formatInputTime = (date) => `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+
+const getFutureBookingWindow = () => {
+  let start = new Date(Date.now() + 60_000);
+  start.setSeconds(0, 0);
+  let end = new Date(start.getTime() + 60 * 60_000);
+
+  if (getToday(start) !== getToday(end)) {
+    start = new Date(start);
+    start.setDate(start.getDate() + 1);
+    start.setHours(9, 0, 0, 0);
+    end = new Date(start.getTime() + 60 * 60_000);
+  }
+
+  return {
+    bookingDate: getToday(start),
+    startTime: formatInputTime(start),
+    endTime: formatInputTime(end),
+  };
+};
+
+const getMinimumStartTime = (timestamp) => formatInputTime(new Date(timestamp + 60_000));
 
 const formatDate = (date) => {
   if (!date) return 'Date unavailable';
@@ -25,31 +47,42 @@ const formatDate = (date) => {
 
 const formatTime = (time) => (time ? time.slice(0, 5) : '--:--');
 
-const getBookingStatus = (booking) => {
-  if (booking.status === 'COMPLETED') return 'completed';
+const getBookingTimestamp = (booking, timeField) => {
+  if (!booking.bookingDate || !booking[timeField]) return null;
+  const timestamp = new Date(`${booking.bookingDate}T${booking[timeField].slice(0, 8)}`).getTime();
+  return Number.isNaN(timestamp) ? null : timestamp;
+};
+
+const formatDuration = (milliseconds) => {
+  const totalMinutes = Math.max(0, Math.ceil(milliseconds / 60_000));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${hours}h ${minutes}m`;
+};
+
+const getBookingStatusAt = (booking, now) => {
+  if (booking.status === 'COMPLETED') return 'expired';
   if (booking.status === 'CANCELLED') return 'cancelled';
-  if (booking.status === 'CONFIRMED') return 'active';
-  return 'unknown';
+  if (booking.status !== 'CONFIRMED') return 'unknown';
+
+  const end = getBookingTimestamp(booking, 'endTime');
+  if (end !== null && end <= now) return 'expired';
+
+  const start = getBookingTimestamp(booking, 'startTime');
+  return start !== null && start > now ? 'upcoming' : 'active';
 };
 
-const getTimeRemaining = (bookingDate, endTime) => {
-  const today = new Date();
-  const bookingDateObj = new Date(`${bookingDate}T${endTime}:00`);
-  const diffMs = bookingDateObj - today;
-  const diffMins = Math.floor(diffMs / 60000);
-  
-  if (diffMins < 0) return null;
-  if (diffMins < 1) return 'ending soon';
-  if (diffMins < 60) return `${diffMins}m left`;
-  const hours = Math.floor(diffMins / 60);
-  const mins = diffMins % 60;
-  return `${hours}h ${mins}m left`;
-};
+const getBookingCountdown = (booking, status, now) => {
+  if (status !== 'active' && status !== 'upcoming') return '';
 
-const isBookingExpired = (bookingDate, endTime) => {
-  const today = new Date();
-  const bookingDateObj = new Date(`${bookingDate}T${endTime}:00`);
-  return bookingDateObj < today;
+  const end = getBookingTimestamp(booking, 'endTime');
+  if (status === 'upcoming') {
+    const start = getBookingTimestamp(booking, 'startTime');
+    if (start === null || end === null) return '';
+    return `Starts in ${formatDuration(start - now)} · ${formatDuration(end - start)} session`;
+  }
+
+  return end === null ? '' : `${formatDuration(end - now)} left`;
 };
 
 export default function StudentSeats() {
@@ -58,19 +91,18 @@ export default function StudentSeats() {
   const [seats, setSeats] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [selectedSeat, setSelectedSeat] = useState(null);
-  const [form, setForm] = useState({ bookingDate: getToday(), startTime: '09:00', endTime: '10:00' });
+  const [form, setForm] = useState(getFutureBookingWindow);
   const [selectedFloor, setSelectedFloor] = useState('All');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [cancellingId, setCancellingId] = useState('');
+  const [now, setNow] = useState(() => Date.now());
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
   const loadData = useCallback(async () => {
-    const requests = [seatApi.getAllSeats()];
-    if (isStudent) requests.push(bookingApi.getMyBookings());
-
-    const [seatData, bookingData = []] = await Promise.all(requests);
+    const bookingData = isStudent ? await bookingApi.getMyBookings() : [];
+    const seatData = await seatApi.getAllSeats();
     setSeats(seatData || []);
     setBookings(bookingData || []);
   }, [isStudent]);
@@ -94,6 +126,11 @@ export default function StudentSeats() {
     };
   }, [loadData]);
 
+  useEffect(() => {
+    const intervalId = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(intervalId);
+  }, []);
+
   const floorOptions = useMemo(() => {
     const floors = [...new Set(seats.map((seat) => seat.floor).filter(Boolean))].sort();
     return ['All', ...floors];
@@ -105,8 +142,11 @@ export default function StudentSeats() {
   );
 
   const availableCount = seats.filter((seat) => seat.status === 'AVAILABLE').length;
-  const confirmedBookings = bookings.filter((booking) => booking.status === 'CONFIRMED');
-  const completedBookings = bookings.filter((booking) => booking.status === 'COMPLETED');
+  const confirmedBookings = bookings.filter((booking) => {
+    const status = getBookingStatusAt(booking, now);
+    return status === 'active' || status === 'upcoming';
+  });
+  const expiredBookings = bookings.filter((booking) => getBookingStatusAt(booking, now) === 'expired');
 
   const refresh = async () => {
     setError('');
@@ -131,6 +171,11 @@ export default function StudentSeats() {
     if (!selectedSeat) return;
     if (form.bookingDate < getToday()) {
       setError('Choose today or a future date.');
+      return;
+    }
+    const bookingStart = new Date(`${form.bookingDate}T${form.startTime}:00`).getTime();
+    if (!Number.isFinite(bookingStart) || bookingStart <= Date.now()) {
+      setError('Choose a start time in the future.');
       return;
     }
     if (form.startTime >= form.endTime) {
@@ -218,8 +263,8 @@ export default function StudentSeats() {
               <strong>{confirmedBookings.length}</strong>
             </div>
             <div className="stat-card">
-              <span><CheckCircle2 size={15} /> Completed</span>
-              <strong>{completedBookings.length}</strong>
+              <span><AlertCircle size={15} /> Expired</span>
+              <strong>{expiredBookings.length}</strong>
             </div>
           </>
         )}
@@ -240,17 +285,18 @@ export default function StudentSeats() {
           ) : (
             <div className="booking-list">
               {bookings.map((booking) => {
-                const status = getBookingStatus(booking);
-                const timeRemaining = getTimeRemaining(booking.bookingDate, booking.endTime);
-                const isExpired = isBookingExpired(booking.bookingDate, booking.endTime);
-                const isConfirmed = booking.status === 'CONFIRMED';
+                const status = getBookingStatusAt(booking, now);
+                const countdown = getBookingCountdown(booking, status, now);
+                const isConfirmed = booking.status === 'CONFIRMED' && status !== 'expired';
+                const statusLabel = status === 'active' ? 'Booked'
+                  : status === 'upcoming' ? 'Upcoming'
+                    : status === 'expired' ? 'Expired'
+                      : status === 'cancelled' ? 'Cancelled' : 'Unknown';
                 
                 return (
                   <article className={`booking-item booking-item-${status}`} key={booking.id}>
                     <div className="booking-seat-icon">
-                      {status === 'completed' ? (
-                        <CheckCircle2 size={20} />
-                      ) : status === 'cancelled' ? (
+                      {status === 'expired' || status === 'cancelled' ? (
                         <AlertCircle size={20} />
                       ) : (
                         <Armchair size={20} />
@@ -260,7 +306,7 @@ export default function StudentSeats() {
                       <div className="booking-title-row">
                         <h3>Seat {booking.seatNumber || booking.seatId}</h3>
                         <span className={`badge badge-${status}`}>
-                          {status === 'completed' ? 'Completed' : status === 'cancelled' ? 'Cancelled' : 'Active'}
+                          {statusLabel}
                         </span>
                       </div>
                       <div className="booking-meta">
@@ -268,17 +314,15 @@ export default function StudentSeats() {
                         <span><CalendarDays size={14} /> {formatDate(booking.bookingDate)}</span>
                         <span><Clock3 size={14} /> {formatTime(booking.startTime)}–{formatTime(booking.endTime)}</span>
                       </div>
-                      {isConfirmed && timeRemaining && (
-                        <div className="booking-expiry-info">
+                      {countdown && (
+                        <div className={`booking-expiry-info booking-expiry-${status}`}>
                           <Hourglass size={13} />
-                          <span className={isExpired || timeRemaining === 'ending soon' ? 'expiring' : ''}>
-                            {timeRemaining}
-                          </span>
+                          <span>{countdown}</span>
                         </div>
                       )}
-                      {status === 'completed' && (
-                        <div className="booking-completed-info">
-                          Your slot has ended. The seat is now available for other students.
+                      {status === 'expired' && (
+                        <div className="booking-expired-info">
+                          This slot has expired. The seat is now available for other students.
                         </div>
                       )}
                     </div>
@@ -336,6 +380,7 @@ export default function StudentSeats() {
                 <input
                   type="time"
                   value={form.startTime}
+                  min={form.bookingDate === getToday() ? getMinimumStartTime(now) : undefined}
                   onChange={(event) => setForm((current) => ({ ...current, startTime: event.target.value }))}
                   required
                 />
