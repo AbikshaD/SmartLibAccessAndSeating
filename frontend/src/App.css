@@ -1124,3 +1124,819 @@ th {
     border-radius: 14px;
   }
 }
+
+/* =========================================================
+   Books Catalog & Genre Navigation Styles
+   ========================================================= */
+
+.stat-card-link {
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-card-link:hover {
+  transform: translateY(-2px);
+  border-color: #93c5fd;
+  box-shadow: 0 12px 28px rgba(37, 99, 235, 0.12);
+}
+
+.stat-card-hint {
+  margin-top: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #2563eb;
+}
+
+/* Dashboard Books Panel */
+.dashboard-books-panel {
+  background: linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%);
+  border: 1px solid #bfdbfe;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.dashboard-books-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.dashboard-books-badge {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.dashboard-books-header h2 {
+  margin: 4px 0 6px;
+  font-size: 1.35rem;
+  color: #0f172a;
+}
+
+.dashboard-books-desc {
+  margin: 0;
+  color: #475569;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.dashboard-genres-preview {
+  padding-top: 8px;
+}
+
+.dashboard-genre-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  font-size: 0.88rem;
+  padding: 8px 14px;
+  background: white;
+  border: 1px solid #cbd5e1;
+  color: #1e293b;
+  border-radius: 999px;
+  transition: all 0.2s ease;
+}
+
+.dashboard-genre-pill:hover {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.genre-pill-count {
+  background: #e2e8f0;
+  color: #334155;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+
+.dashboard-genre-pill:hover .genre-pill-count {
+  background: #2563eb;
+  color: white;
+}
+
+.dashboard-books-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 8px;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* Books Catalog Page Styles */
+.genre-instruction {
+  color: #64748b;
+  font-size: 0.92rem;
+  margin: 4px 0 16px;
+}
+
+.genre-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.genre-card {
+  border: 1px solid #e2e8f0;
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.22s ease;
+  position: relative;
+  user-select: none;
+}
+
+.genre-card:hover {
+  transform: translateY(-3px);
+  border-color: #93c5fd;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+}
+
+.genre-card.selected {
+  border: 2px solid #2563eb;
+  background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+  box-shadow: 0 14px 34px rgba(37, 99, 235, 0.16);
+}
+
+.genre-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.genre-icon-pill {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+}
+
+.genre-count-badge {
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.genre-card-title {
+  margin: 0 0 6px;
+  font-size: 1.15rem;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.genre-card-desc {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  flex-grow: 1;
+}
+
+.genre-card-footer {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #2563eb;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.genre-arrow {
+  transition: transform 0.2s ease;
+}
+
+.genre-card:hover .genre-arrow {
+  transform: translateX(4px);
+}
+
+.genre-arrow.rotated {
+  transform: rotate(90deg);
+}
+
+/* Genre Count Banner Announcement */
+.genre-count-banner {
+  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+  color: white;
+  border-radius: 18px;
+  padding: 24px 28px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  box-shadow: 0 16px 36px rgba(30, 58, 138, 0.22);
+  animation: fadeInBanner 0.3s ease-out;
+}
+
+@keyframes fadeInBanner {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.genre-banner-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.18);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: white;
+}
+
+.genre-banner-text {
+  flex: 1;
+}
+
+.genre-banner-tag {
+  display: inline-block;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #bfdbfe;
+  margin-bottom: 2px;
+}
+
+.genre-banner-text h2 {
+  margin: 0 0 6px;
+  font-size: 1.55rem;
+  color: white;
+}
+
+.genre-banner-text p {
+  margin: 0;
+  color: #e0e7ff;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.count-highlight {
+  font-size: 1.35rem;
+  color: #fef08a;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 2px 8px;
+  border-radius: 6px;
+  display: inline-block;
+}
+
+.genre-banner-clear {
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  white-space: nowrap;
+  padding: 10px 16px;
+  border-radius: 10px;
+}
+
+.genre-banner-clear:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Books List & Search Wrap */
+.search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 280px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding-left: 36px;
+  padding-right: 32px;
+  font-size: 0.9rem;
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 4px;
+}
+
+.clear-search-btn:hover {
+  color: #334155;
+}
+
+.search-status-text {
+  font-size: 0.88rem;
+  color: #64748b;
+  margin: -8px 0 12px;
+}
+
+/* Books Grid */
+.books-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+  gap: 20px;
+}
+
+.book-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 22px;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.book-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.07);
+}
+
+.book-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.book-genre-pill {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.book-genre-pill:hover {
+  opacity: 0.8;
+}
+
+.book-title {
+  margin: 0 0 4px;
+  font-size: 1.2rem;
+  color: #0f172a;
+  line-height: 1.35;
+  font-weight: 700;
+}
+
+.book-author {
+  margin: 0 0 12px;
+  font-size: 0.88rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+.book-description {
+  margin: 0 0 16px;
+  color: #475569;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  flex-grow: 1;
+}
+
+.book-details-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  font-size: 0.82rem;
+  color: #475569;
+}
+
+.book-detail-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detail-icon {
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.book-card-actions {
+  display: flex;
+}
+
+.book-action-btn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.86rem;
+  text-decoration: none;
+}
+
+.book-action-btn:hover {
+  background: #dbeafe;
+}
+
+.empty-catalog-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: #64748b;
+}
+
+.empty-icon {
+  margin-bottom: 12px;
+  color: #cbd5e1;
+}
+
+.empty-catalog-state h3 {
+  margin: 0 0 6px;
+  color: #0f172a;
+}
+
+.empty-catalog-state p {
+  margin: 0 0 16px;
+}
+
+@media (max-width: 640px) {
+  .genre-count-banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .genre-banner-clear {
+    width: 100%;
+  }
+
+  .search-wrap {
+    width: 100%;
+  }
+
+  .books-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================================
+   Announcements System Styles (Admin & Student)
+   ========================================================= */
+
+/* Student Dashboard Announcement Banner */
+.student-announcement-banner {
+  border-radius: 18px;
+  padding: 22px 24px;
+  position: relative;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
+  animation: bannerSlideDown 0.35s ease-out;
+}
+
+@keyframes bannerSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.student-announcement-banner.alert-urgent {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border: 2px solid #f87171;
+  color: #991b1b;
+}
+
+.student-announcement-banner.alert-info {
+  background: linear-gradient(135deg, #f0f7ff 0%, #e0f2fe 100%);
+  border: 2px solid #7dd3fc;
+  color: #0369a1;
+}
+
+.announcement-banner-inner {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+}
+
+.announcement-banner-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.student-announcement-banner.alert-urgent .announcement-banner-icon-wrap {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.student-announcement-banner.alert-info .announcement-banner-icon-wrap {
+  background: #e0f2fe;
+  color: #0284c7;
+}
+
+.announcement-banner-body {
+  flex: 1;
+}
+
+.announcement-banner-heading-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.announcement-tag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.student-announcement-banner.alert-urgent .announcement-tag {
+  background: #b91c1c;
+  color: white;
+}
+
+.student-announcement-banner.alert-info .announcement-tag {
+  background: #0284c7;
+  color: white;
+}
+
+.announcement-date-tag {
+  font-size: 0.78rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.announcement-headline {
+  margin: 0 0 6px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.announcement-text {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: #334155;
+}
+
+.announcement-toggle-btn {
+  margin-top: 12px;
+  background: transparent;
+  border: none;
+  color: #1d4ed8;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.announcement-toggle-btn:hover {
+  text-decoration: underline;
+}
+
+.dismiss-banner-btn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.dismiss-banner-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #0f172a;
+}
+
+.additional-announcements-list {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.extra-announcement-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.extra-ann-icon {
+  margin-top: 2px;
+  color: #0284c7;
+  flex-shrink: 0;
+}
+
+.extra-ann-details {
+  flex: 1;
+}
+
+.extra-ann-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+
+.extra-ann-header strong {
+  font-size: 0.92rem;
+  color: #0f172a;
+}
+
+.extra-ann-date {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.extra-ann-details p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #475569;
+  line-height: 1.45;
+}
+
+.dismiss-extra-btn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 2px;
+}
+
+.dismiss-extra-btn:hover {
+  color: #334155;
+}
+
+/* Admin Announcement Page Styles */
+.create-ann-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #eff6ff;
+  color: #2563eb;
+  display: grid;
+  place-items: center;
+}
+
+.announcement-textarea {
+  font: inherit;
+  border: 1px solid #dfe7f3;
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: white;
+  color: #0f172a;
+  resize: vertical;
+  min-height: 110px;
+}
+
+.announcement-textarea:focus {
+  outline: 2px solid rgba(59, 130, 246, 0.2);
+  border-color: #60a5fa;
+}
+
+.announcement-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.announcement-card-admin {
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 22px;
+  background: white;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.announcement-card-admin:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.05);
+}
+
+.announcement-admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.announcement-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.announcement-type-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid;
+}
+
+.announcement-priority-pill {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+.delete-ann-btn {
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.announcement-card-title {
+  margin: 0 0 8px;
+  font-size: 1.2rem;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.announcement-meta-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 12px;
+  font-size: 0.8rem;
+  color: #64748b;
+  flex-wrap: wrap;
+}
+
+.announcement-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.announcement-card-body {
+  margin: 0;
+  color: #334155;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  white-space: pre-line;
+}
+
+

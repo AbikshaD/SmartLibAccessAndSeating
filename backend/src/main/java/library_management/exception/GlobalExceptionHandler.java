@@ -44,6 +44,16 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.NOT_FOUND, exception.getMessage());
     }
 
+    @ExceptionHandler(BookNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleBookNotFound(BookNotFoundException exception) {
+        return error(HttpStatus.NOT_FOUND, exception.getMessage());
+    }
+
+    @ExceptionHandler(AnnouncementNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleAnnouncementNotFound(AnnouncementNotFoundException exception) {
+        return error(HttpStatus.NOT_FOUND, exception.getMessage());
+    }
+
     @ExceptionHandler({InvalidFloorException.class, InvalidBookingRequestException.class})
     public ResponseEntity<Map<String, String>> handleInvalidRequest(RuntimeException exception) {
         return error(HttpStatus.BAD_REQUEST, exception.getMessage());

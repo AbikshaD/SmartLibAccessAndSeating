@@ -3,6 +3,7 @@ import './App.css';
 import Layout from './components/Layout';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import AccessDenied from './pages/AccessDenied';
+import AdminAnnouncements from './pages/AdminAnnouncements';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminFeedback from './pages/AdminFeedback';
 import AdminSeats from './pages/AdminSeats';
@@ -10,6 +11,7 @@ import AdminUsers from './pages/AdminUsers';
 import Login from './pages/Login';
 import NotFound from './pages/NotFound';
 import Register from './pages/Register';
+import StudentBooks from './pages/StudentBooks';
 import StudentDashboard from './pages/StudentDashboard';
 import StudentFeedback from './pages/StudentFeedback';
 import StudentProfile from './pages/StudentProfile';
@@ -37,12 +39,14 @@ function AppRoutes() {
       <Route element={<ProtectedRoute allowedRoles={['STUDENT', 'ADMIN']} />}>
         <Route path="/student" element={<Layout><StudentDashboard /></Layout>} />
         <Route path="/student/seats" element={<Layout><StudentSeats /></Layout>} />
+        <Route path="/student/books" element={<Layout><StudentBooks /></Layout>} />
         <Route path="/student/profile" element={<Layout><StudentProfile /></Layout>} />
         <Route path="/student/feedback" element={<Layout><StudentFeedback /></Layout>} />
       </Route>
 
       <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
         <Route path="/admin" element={<Layout><AdminDashboard /></Layout>} />
+        <Route path="/admin/announcements" element={<Layout><AdminAnnouncements /></Layout>} />
         <Route path="/admin/users" element={<Layout><AdminUsers /></Layout>} />
         <Route path="/admin/seats" element={<Layout><AdminSeats /></Layout>} />
         <Route path="/admin/feedback" element={<Layout><AdminFeedback /></Layout>} />

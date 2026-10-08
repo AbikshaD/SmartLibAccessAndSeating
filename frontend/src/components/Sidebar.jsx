@@ -1,16 +1,19 @@
-import { Armchair, BarChart3, LayoutGrid, LogOut, MessageSquareText, ShieldCheck, UserRound, Users } from 'lucide-react';
+import { Armchair, BarChart3, BookOpen, LayoutGrid, LogOut, Megaphone, MessageSquareText, ShieldCheck, UserRound, Users } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const studentLinks = [
   { to: '/student', label: 'Dashboard', icon: LayoutGrid },
   { to: '/student/seats', label: 'Seats', icon: Armchair },
+  { to: '/student/books', label: 'Books', icon: BookOpen },
   { to: '/student/profile', label: 'Profile', icon: UserRound },
   { to: '/student/feedback', label: 'Feedback', icon: MessageSquareText },
 ];
 
 const adminLinks = [
   { to: '/admin', label: 'Dashboard', icon: BarChart3 },
+  { to: '/admin/announcements', label: 'Announcements', icon: Megaphone },
+  { to: '/student/books', label: 'Books', icon: BookOpen },
   { to: '/admin/users', label: 'Users', icon: Users },
   { to: '/admin/seats', label: 'Seats', icon: Armchair },
   { to: '/admin/feedback', label: 'Feedback', icon: MessageSquareText },
