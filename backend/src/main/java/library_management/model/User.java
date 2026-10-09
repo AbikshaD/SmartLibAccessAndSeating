@@ -1,12 +1,14 @@
 package library_management.model;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 @Document(collection = "users")
 public class User {
@@ -31,6 +33,12 @@ public class User {
     private String password;
 
     private String role;
+
+    private boolean blocked;
+
+    private String blockedReason;
+
+    private int bookingCancellationCount;
 
     public String getId() {
         return id;
@@ -78,5 +86,29 @@ public class User {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public boolean isBlocked() {
+        return blocked;
+    }
+
+    public void setBlocked(boolean blocked) {
+        this.blocked = blocked;
+    }
+
+    public String getBlockedReason() {
+        return blockedReason;
+    }
+
+    public void setBlockedReason(String blockedReason) {
+        this.blockedReason = blockedReason;
+    }
+
+    public int getBookingCancellationCount() {
+        return bookingCancellationCount;
+    }
+
+    public void setBookingCancellationCount(int bookingCancellationCount) {
+        this.bookingCancellationCount = bookingCancellationCount;
     }
 }

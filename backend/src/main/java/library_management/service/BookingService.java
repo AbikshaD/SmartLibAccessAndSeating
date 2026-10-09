@@ -19,24 +19,37 @@ import library_management.exception.SeatNotFoundException;
 import library_management.exception.UnauthorizedBookingAccessException;
 import library_management.model.Booking;
 import library_management.model.Seat;
+import library_management.model.User;
 import library_management.repository.BookingRepository;
 import library_management.repository.SeatRepository;
+import library_management.repository.UserRepository;
 
 @Service
 public class BookingService {
 
     private final BookingRepository bookingRepository;
     private final SeatRepository seatRepository;
+    private final UserRepository userRepository;
+    private final UserService userService;
     private final MongoTemplate mongoTemplate;
 
     public BookingService(BookingRepository bookingRepository, SeatRepository seatRepository,
-            MongoTemplate mongoTemplate) {
+            UserRepository userRepository, UserService userService, MongoTemplate mongoTemplate) {
         this.bookingRepository = bookingRepository;
         this.seatRepository = seatRepository;
+        this.userRepository = userRepository;
+        this.userService = userService;
         this.mongoTemplate = mongoTemplate;
     }
 
     public Booking createBooking(String studentId, CreateBookingRequest request) {
+        userRepository.findByStudentId(studentId).ifPresent(user -> {
+            if (user.isBlocked()) {
+                throw new library_management.exception.UserBlockedException(
+                    "Blocked from booking. AI Anomaly Detection: You have been blocked due to frequent seat cancellations (more than 3 times). Contact admin to enable booking.");
+            }
+        });
+
         LocalDateTime bookingStart = LocalDateTime.of(request.bookingDate(), request.startTime());
         if (!bookingStart.isAfter(LocalDateTime.now())) {
             throw new InvalidBookingRequestException("Booking start time must be in the future.");
@@ -146,6 +159,7 @@ public class BookingService {
     }
 
     public Booking cancelBooking(String bookingId, String requesterId, boolean admin) {
+        completeExpiredBookings();
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new BookingNotFoundException(bookingId));
         ensureCanAccess(booking, requesterId, admin);
@@ -172,6 +186,11 @@ public class BookingService {
             Query.query(seatCriteria.and("status").is(Seat.Status.BOOKED)),
                 new Update().set("status", Seat.Status.AVAILABLE),
                 Seat.class);
+
+        if (!admin) {
+            userService.recordStudentBookingCancellation(booking.getStudentId());
+        }
+
         return cancelled;
     }
 

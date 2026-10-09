@@ -71,6 +71,11 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.FORBIDDEN, exception.getMessage());
     }
 
+    @ExceptionHandler(UserBlockedException.class)
+    public ResponseEntity<Map<String, String>> handleUserBlocked(UserBlockedException exception) {
+        return error(HttpStatus.FORBIDDEN, exception.getMessage());
+    }
+
     @ExceptionHandler(DuplicateEmailException.class)
     public ResponseEntity<Map<String, String>> handleDuplicateEmail(DuplicateEmailException exception) {
         return error(HttpStatus.CONFLICT, exception.getMessage());

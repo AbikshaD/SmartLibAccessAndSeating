@@ -3,6 +3,11 @@ package library_management.service;
 import java.util.List;
 
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -16,10 +21,12 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final MongoTemplate mongoTemplate;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, MongoTemplate mongoTemplate) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.mongoTemplate = mongoTemplate;
     }
 
     public User createUser(User user) {
@@ -63,6 +70,43 @@ public class UserService {
         } catch (DuplicateKeyException exception) {
             throw new DuplicateEmailException(updatedUser.getEmail());
         }
+    }
+
+    public User unblockUser(String studentId) {
+        User user = userRepository.findByStudentId(studentId)
+                .orElseThrow(() -> new UserNotFoundException(studentId));
+        user.setBlocked(false);
+        user.setBlockedReason(null);
+        user.setBookingCancellationCount(0);
+        return userRepository.save(user);
+    }
+
+        public void recordStudentBookingCancellation(String studentId) {
+        User user = mongoTemplate.findAndModify(
+            Query.query(Criteria.where("studentId").is(studentId)),
+            new Update().inc("bookingCancellationCount", 1),
+            FindAndModifyOptions.options().returnNew(true),
+            User.class);
+        if (user == null) {
+            throw new UserNotFoundException(studentId);
+        }
+
+        if (user.getBookingCancellationCount() > 3 && !user.isBlocked()) {
+            mongoTemplate.updateFirst(
+                Query.query(Criteria.where("studentId").is(studentId)
+                    .and("bookingCancellationCount").gt(3)),
+                new Update().set("blocked", true)
+                    .set("blockedReason", "Automatically blocked after more than 3 booking cancellations."),
+                User.class);
+        }
+        }
+
+    public User blockUser(String studentId, String reason) {
+        User user = userRepository.findByStudentId(studentId)
+                .orElseThrow(() -> new UserNotFoundException(studentId));
+        user.setBlocked(true);
+        user.setBlockedReason(reason);
+        return userRepository.save(user);
     }
 
     public void deleteUser(String id) {

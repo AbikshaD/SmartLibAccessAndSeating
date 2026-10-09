@@ -58,6 +58,18 @@ public class UserController {
 		return ResponseEntity.ok(userService.updateUser(id, user));
 	}
 
+	@PutMapping("/{id}/unblock")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<User> unblockUser(@PathVariable String id) {
+		return ResponseEntity.ok(userService.unblockUser(id));
+	}
+
+	@PutMapping("/{id}/enable")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<User> enableUser(@PathVariable String id) {
+		return ResponseEntity.ok(userService.unblockUser(id));
+	}
+
 	@DeleteMapping("/{id}")
 	public ResponseEntity<Void> deleteUser(@PathVariable String id) {
 		userService.deleteUser(id);

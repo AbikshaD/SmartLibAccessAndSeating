@@ -20,6 +20,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -63,7 +64,7 @@ class BookingManagementTests {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-        private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     private String adminId;
     private String studentId;
@@ -167,6 +168,54 @@ class BookingManagementTests {
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("CANCELLED"));
+        org.junit.jupiter.api.Assertions.assertEquals(1,
+                userRepository.findByStudentId(studentId).orElseThrow().getBookingCancellationCount());
+    }
+
+    @Test
+    void fourthStudentCancellationBlocksBookingUntilAdminEnablesIt() throws Exception {
+        for (int cancellation = 1; cancellation <= 4; cancellation++) {
+            MvcResult created = mockMvc.perform(post("/bookings")
+                            .header("Authorization", "Bearer " + studentToken)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(bookingJson(testSeat.getSeatNumber(), studentId)))
+                    .andExpect(status().isCreated())
+                    .andReturn();
+            String bookingId = objectMapper.readTree(created.getResponse().getContentAsString())
+                    .get("id").asText();
+
+            mockMvc.perform(delete("/bookings/" + bookingId)
+                            .header("Authorization", "Bearer " + studentToken))
+                    .andExpect(status().isOk());
+        }
+
+        User blockedStudent = userRepository.findByStudentId(studentId).orElseThrow();
+        org.junit.jupiter.api.Assertions.assertTrue(blockedStudent.isBlocked());
+        org.junit.jupiter.api.Assertions.assertEquals(4, blockedStudent.getBookingCancellationCount());
+        org.junit.jupiter.api.Assertions.assertEquals(Seat.Status.AVAILABLE,
+                seatRepository.findById(testSeat.getId()).orElseThrow().getStatus());
+
+        mockMvc.perform(post("/bookings")
+                        .header("Authorization", "Bearer " + studentToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(bookingJson(testSeat.getSeatNumber(), studentId)))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(put("/users/" + studentId + "/unblock")
+                        .header("Authorization", "Bearer " + studentToken))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(put("/users/" + studentId + "/unblock")
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.blocked").value(false))
+                .andExpect(jsonPath("$.bookingCancellationCount").value(0));
+
+        mockMvc.perform(post("/bookings")
+                        .header("Authorization", "Bearer " + studentToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(bookingJson(testSeat.getSeatNumber(), studentId)))
+                .andExpect(status().isCreated());
     }
 
     @Test
@@ -255,6 +304,49 @@ class BookingManagementTests {
                 .andExpect(status().isOk());
         mockMvc.perform(get("/seats/floor/ROOFTOP").header("Authorization", "Bearer " + studentToken))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void studentBlockedAfterMoreThan3CancellationsAndAdminCanUnblock() throws Exception {
+        for (int i = 1; i <= 4; i++) {
+            MvcResult result = mockMvc.perform(post("/bookings")
+                            .header("Authorization", "Bearer " + studentToken)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(bookingJson(testSeat.getSeatNumber(), studentId)))
+                    .andExpect(status().isCreated())
+                    .andReturn();
+            String bookingId = objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asText();
+            mockMvc.perform(delete("/bookings/" + bookingId)
+                            .header("Authorization", "Bearer " + studentToken))
+                    .andExpect(status().isOk());
+        }
+
+        User student = userRepository.findByStudentId(studentId).orElseThrow();
+        org.junit.jupiter.api.Assertions.assertTrue(student.isBlocked());
+
+        mockMvc.perform(post("/bookings")
+                        .header("Authorization", "Bearer " + studentToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(bookingJson(testSeat.getSeatNumber(), studentId)))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(put("/users/" + studentId + "/unblock")
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk());
+
+        User unblockedStudent = userRepository.findByStudentId(studentId).orElseThrow();
+        org.junit.jupiter.api.Assertions.assertFalse(unblockedStudent.isBlocked());
+
+        MvcResult finalResult = mockMvc.perform(post("/bookings")
+                        .header("Authorization", "Bearer " + studentToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(bookingJson(testSeat.getSeatNumber(), studentId)))
+                .andExpect(status().isCreated())
+                .andReturn();
+        String finalBookingId = objectMapper.readTree(finalResult.getResponse().getContentAsString()).get("id").asText();
+        mockMvc.perform(delete("/bookings/" + finalBookingId)
+                        .header("Authorization", "Bearer " + studentToken))
+                .andExpect(status().isOk());
     }
 
     private void saveUser(String id, String role) {
