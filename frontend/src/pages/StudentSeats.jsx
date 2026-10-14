@@ -86,7 +86,7 @@ const getBookingCountdown = (booking, status, now) => {
 };
 
 export default function StudentSeats() {
-  const { role } = useAuth();
+  const { role, user, refreshUser } = useAuth();
   const isStudent = role === 'STUDENT';
   const [seats, setSeats] = useState([]);
   const [bookings, setBookings] = useState([]);
@@ -158,6 +158,10 @@ export default function StudentSeats() {
   };
 
   const handleBookSeat = (seat) => {
+    if (user?.blocked) {
+      setError('Blocked from booking: AI anomaly detection triggered due to frequent seat cancellations (> 3 times). Only an administrator can unblock your account.');
+      return;
+    }
     setSelectedSeat(seat);
     setSuccess('');
     setError('');
@@ -167,6 +171,11 @@ export default function StudentSeats() {
     event.preventDefault();
     setError('');
     setSuccess('');
+
+    if (user?.blocked) {
+      setError('Blocked from booking: AI anomaly detection triggered due to frequent seat cancellations (> 3 times). Only an administrator can unblock your account.');
+      return;
+    }
 
     if (!selectedSeat) return;
     if (form.bookingDate < getToday()) {
@@ -212,6 +221,7 @@ export default function StudentSeats() {
     try {
       await bookingApi.cancelBooking(booking.id);
       setSuccess(`Booking for seat ${booking.seatNumber} has been cancelled.`);
+      if (refreshUser) await refreshUser();
       try {
         await loadData();
       } catch (err) {
@@ -244,8 +254,29 @@ export default function StudentSeats() {
         </button>
       </header>
 
+      {isStudent && user?.blocked && (
+        <div style={{ marginBottom: '1.5rem', borderLeft: '4px solid #ef4444', backgroundColor: '#fef2f2', padding: '1rem 1.25rem', borderRadius: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <AlertCircle size={24} style={{ color: '#dc2626', flexShrink: 0 }} />
+            <div>
+              <strong style={{ color: '#991b1b', fontSize: '1.05rem', display: 'block' }}>Blocked from Booking (AI Anomaly Detection)</strong>
+              <p style={{ color: '#b91c1c', margin: '0.25rem 0 0 0', fontSize: '0.95rem' }}>
+                {user.blockedReason || 'You have been automatically blocked from booking due to frequent seat cancellations (more than 3 times). Only an administrator can enable your account.'}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <ErrorMessage message={error} />
       {success && <div className="success-box" role="status">{success}</div>}
+      {isStudent && user?.blocked && (
+        <div className="booking-blocked-banner" role="alert">
+          <strong>Blocked from booking</strong>
+          <span>{user.blockedReason || 'An administrator must enable booking access before you can reserve a seat.'}</span>
+          <span>Contact an administrator to restore booking access.</span>
+        </div>
+      )}
 
       <section className="stats-grid booking-stats">
         <div className="stat-card">
@@ -345,7 +376,7 @@ export default function StudentSeats() {
         </section>
       )}
 
-      {isStudent && selectedSeat && (
+      {isStudent && !user?.blocked && selectedSeat && (
         <section className="panel-card booking-form-panel" aria-labelledby="booking-form-title">
           <div className="section-heading">
             <div>
@@ -437,7 +468,7 @@ export default function StudentSeats() {
         </div>
         <SeatGrid
           seats={filteredSeats}
-          onBook={isStudent ? handleBookSeat : undefined}
+          onBook={isStudent && !user?.blocked ? handleBookSeat : undefined}
         />
       </section>
     </div>

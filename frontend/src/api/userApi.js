@@ -35,4 +35,10 @@ export const userApi = {
       method: 'DELETE',
     });
   },
+
+  unblockUser(studentId) {
+    return apiRequest(`/users/${studentId}/unblock`, {
+      method: 'PUT',
+    });
+  },
 };
