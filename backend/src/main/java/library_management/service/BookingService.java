@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import library_management.exception.BookingCannotBeCancelledException;
 import library_management.exception.BookingNotFoundException;
+import library_management.exception.BookingTimeConflictException;
 import library_management.exception.InvalidBookingRequestException;
 import library_management.exception.SeatAlreadyBookedException;
 import library_management.exception.SeatNotFoundException;
@@ -59,6 +60,16 @@ public class BookingService {
         }
         if (!request.startTime().isBefore(request.endTime())) {
             throw new InvalidBookingRequestException("startTime must be before endTime.");
+        }
+
+        Query overlappingBookingQuery = Query.query(new Criteria().andOperator(
+                Criteria.where("studentId").is(studentId),
+                Criteria.where("bookingDate").is(request.bookingDate()),
+                Criteria.where("status").is(Booking.Status.CONFIRMED),
+                Criteria.where("startTime").lt(request.endTime()),
+                Criteria.where("endTime").gt(request.startTime())));
+        if (mongoTemplate.exists(overlappingBookingQuery, Booking.class)) {
+            throw new BookingTimeConflictException();
         }
 
         List<Seat> matchingSeats = seatRepository.findBySeatNumber(request.seatId());

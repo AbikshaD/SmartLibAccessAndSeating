@@ -73,6 +73,7 @@ class BookingManagementTests {
     private String studentToken;
     private String otherStudentToken;
     private Seat testSeat;
+    private Seat secondTestSeat;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -101,6 +102,12 @@ class BookingManagementTests {
                     .filter(booking -> booking.getSeatId().equals(testSeat.getSeatNumber()))
                     .forEach(bookingRepository::delete);
             seatRepository.deleteById(testSeat.getId());
+        }
+        if (secondTestSeat != null && secondTestSeat.getId() != null) {
+            bookingRepository.findAll().stream()
+                    .filter(booking -> booking.getSeatId().equals(secondTestSeat.getSeatNumber()))
+                    .forEach(bookingRepository::delete);
+            seatRepository.deleteById(secondTestSeat.getId());
         }
         userRepository.findByStudentId(adminId).ifPresent(userRepository::delete);
         userRepository.findByStudentId(studentId).ifPresent(userRepository::delete);
@@ -170,6 +177,47 @@ class BookingManagementTests {
                 .andExpect(jsonPath("$.status").value("CANCELLED"));
         org.junit.jupiter.api.Assertions.assertEquals(1,
                 userRepository.findByStudentId(studentId).orElseThrow().getBookingCancellationCount());
+    }
+
+    @Test
+    void studentCannotBookAnotherSeatDuringAnOverlappingTime() throws Exception {
+        LocalDate bookingDate = LocalDate.now().plusDays(1);
+        mockMvc.perform(post("/bookings")
+                        .header("Authorization", "Bearer " + studentToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(bookingJson(testSeat.getSeatNumber(), studentId, bookingDate, "09:00", "10:00")))
+                .andExpect(status().isCreated());
+
+        secondTestSeat = new Seat();
+        secondTestSeat.setSeatNumber("C-" + UUID.randomUUID().toString().substring(0, 8));
+        secondTestSeat.setFloor("Ground");
+        secondTestSeat.setStatus(Seat.Status.AVAILABLE);
+        secondTestSeat = seatRepository.save(secondTestSeat);
+
+        mockMvc.perform(post("/bookings")
+                        .header("Authorization", "Bearer " + studentToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(bookingJson(secondTestSeat.getSeatNumber(), studentId,
+                                bookingDate, "09:30", "10:30")))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error").value(
+                        "You already have a confirmed booking that overlaps this time."));
+
+        org.junit.jupiter.api.Assertions.assertEquals(Seat.Status.AVAILABLE,
+                seatRepository.findById(secondTestSeat.getId()).orElseThrow().getStatus());
+
+        MvcResult nonOverlappingBooking = mockMvc.perform(post("/bookings")
+                        .header("Authorization", "Bearer " + studentToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(bookingJson(secondTestSeat.getSeatNumber(), studentId,
+                                bookingDate, "10:00", "11:00")))
+                .andExpect(status().isCreated())
+                .andReturn();
+        String bookingId = objectMapper.readTree(nonOverlappingBooking.getResponse().getContentAsString())
+                .get("id").asText();
+        mockMvc.perform(delete("/bookings/" + bookingId)
+                        .header("Authorization", "Bearer " + studentToken))
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -369,8 +417,13 @@ class BookingManagementTests {
     }
 
     private String bookingJson(String seatId, String claimedStudentId) {
+        return bookingJson(seatId, claimedStudentId, LocalDate.now().plusDays(1), "09:00", "10:00");
+    }
+
+    private String bookingJson(String seatId, String claimedStudentId, LocalDate bookingDate,
+            String startTime, String endTime) {
         return "{\"seatId\":\"" + seatId + "\",\"studentId\":\"" + claimedStudentId
-                + "\",\"bookingDate\":\"" + LocalDate.now().plusDays(1)
-                + "\",\"startTime\":\"09:00\",\"endTime\":\"10:00\"}";
+                + "\",\"bookingDate\":\"" + bookingDate
+                + "\",\"startTime\":\"" + startTime + "\",\"endTime\":\"" + endTime + "\"}";
     }
 }

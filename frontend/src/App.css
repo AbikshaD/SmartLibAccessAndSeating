@@ -4,7 +4,11 @@
 }
 
 .sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
   width: 260px;
+  height: 100vh;
+  overflow-y: auto;
   background: #0f172a;
   color: white;
   padding: 28px 18px;
@@ -85,6 +89,8 @@
 
 .content-panel {
   flex: 1;
+  min-width: 0;
+  margin-left: 260px;
   padding: 32px;
   background: #f8fafc;
 }
@@ -1090,10 +1096,13 @@ th {
   }
 
   .sidebar {
+    position: static;
     width: 100%;
+    height: auto;
   }
 
   .content-panel {
+    margin-left: 0;
     padding: 20px;
   }
 }
@@ -1957,5 +1966,4 @@ th {
   line-height: 1.55;
   white-space: pre-line;
 }
-
 

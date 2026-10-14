@@ -47,6 +47,13 @@ const formatDate = (date) => {
 
 const formatTime = (time) => (time ? time.slice(0, 5) : '--:--');
 
+const overlapsBooking = (booking, bookingDate, startTime, endTime) => (
+  booking.status === 'CONFIRMED'
+  && booking.bookingDate === bookingDate
+  && booking.startTime?.slice(0, 5) < endTime
+  && booking.endTime?.slice(0, 5) > startTime
+);
+
 const getBookingTimestamp = (booking, timeField) => {
   if (!booking.bookingDate || !booking[timeField]) return null;
   const timestamp = new Date(`${booking.bookingDate}T${booking[timeField].slice(0, 8)}`).getTime();
@@ -189,6 +196,15 @@ export default function StudentSeats() {
     }
     if (form.startTime >= form.endTime) {
       setError('The end time must be later than the start time.');
+      return;
+    }
+    if (bookings.some((booking) => overlapsBooking(
+      booking,
+      form.bookingDate,
+      form.startTime,
+      form.endTime,
+    ))) {
+      setError('You already have a booking that overlaps this time. Choose a different time or cancel the existing booking.');
       return;
     }
 
