@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Armchair, CalendarDays, CalendarPlus2, Clock3, MapPin, RefreshCw, X, AlertCircle, Hourglass } from 'lucide-react';
+import { Armchair, CalendarDays, CalendarPlus2, Clock3, History, MapPin, RefreshCw, X, AlertCircle, Hourglass } from 'lucide-react';
 import { bookingApi } from '../api/bookingApi';
 import { seatApi } from '../api/seatApi';
 import { useAuth } from '../context/AuthContext';
@@ -98,6 +98,7 @@ export default function StudentSeats() {
   const [seats, setSeats] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [selectedSeat, setSelectedSeat] = useState(null);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [form, setForm] = useState(getFutureBookingWindow);
   const [selectedFloor, setSelectedFloor] = useState('All');
   const [loading, setLoading] = useState(true);
@@ -138,6 +139,17 @@ export default function StudentSeats() {
     return () => window.clearInterval(intervalId);
   }, []);
 
+  useEffect(() => {
+    if (!isHistoryOpen) return undefined;
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') setIsHistoryOpen(false);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isHistoryOpen]);
+
   const floorOptions = useMemo(() => {
     const floors = [...new Set(seats.map((seat) => seat.floor).filter(Boolean))].sort();
     return ['All', ...floors];
@@ -152,6 +164,10 @@ export default function StudentSeats() {
   const confirmedBookings = bookings.filter((booking) => {
     const status = getBookingStatusAt(booking, now);
     return status === 'active' || status === 'upcoming';
+  });
+  const historyBookings = bookings.filter((booking) => {
+    const status = getBookingStatusAt(booking, now);
+    return status !== 'active' && status !== 'upcoming';
   });
   const expiredBookings = bookings.filter((booking) => getBookingStatusAt(booking, now) === 'expired');
 
@@ -264,10 +280,26 @@ export default function StudentSeats() {
               : 'View seat availability by floor.'}
           </p>
         </div>
-        <button type="button" className="secondary refresh-button" onClick={refresh}>
-          <RefreshCw size={16} />
-          Refresh
-        </button>
+        <div className="page-header-actions">
+          {isStudent && (
+            <button
+              type="button"
+              className="secondary history-button"
+              onClick={() => setIsHistoryOpen(true)}
+              aria-label={`Open booking history, ${historyBookings.length} past bookings`}
+              aria-haspopup="dialog"
+              aria-expanded={isHistoryOpen}
+              aria-controls="booking-history-drawer"
+            >
+              <History size={18} />
+              <span>History</span>
+            </button>
+          )}
+          <button type="button" className="secondary refresh-button" onClick={refresh}>
+            <RefreshCw size={16} />
+            Refresh
+          </button>
+        </div>
       </header>
 
       {isStudent && user?.blocked && (
@@ -318,42 +350,33 @@ export default function StudentSeats() {
       </section>
 
       {isStudent && (
-        <section className="panel-card booking-history">
+        <section className="panel-card active-bookings">
           <div className="section-heading">
             <div>
               <p className="eyebrow">Your reservations</p>
-              <h2>My bookings</h2>
+              <h2>Active bookings</h2>
             </div>
-            <span className="summary-box">{bookings.length} total</span>
+            <span className="summary-box">{confirmedBookings.length} active</span>
           </div>
 
-          {bookings.length === 0 ? (
-            <div className="empty-state">You don’t have any bookings yet. Choose an available seat below to get started.</div>
+          {confirmedBookings.length === 0 ? (
+            <div className="empty-state">You don’t have any active or upcoming bookings.</div>
           ) : (
             <div className="booking-list">
-              {bookings.map((booking) => {
+              {confirmedBookings.map((booking) => {
                 const status = getBookingStatusAt(booking, now);
                 const countdown = getBookingCountdown(booking, status, now);
-                const isConfirmed = booking.status === 'CONFIRMED' && status !== 'expired';
-                const statusLabel = status === 'active' ? 'Booked'
-                  : status === 'upcoming' ? 'Upcoming'
-                    : status === 'expired' ? 'Expired'
-                      : status === 'cancelled' ? 'Cancelled' : 'Unknown';
-                
+
                 return (
                   <article className={`booking-item booking-item-${status}`} key={booking.id}>
                     <div className="booking-seat-icon">
-                      {status === 'expired' || status === 'cancelled' ? (
-                        <AlertCircle size={20} />
-                      ) : (
-                        <Armchair size={20} />
-                      )}
+                      <Armchair size={20} />
                     </div>
                     <div className="booking-details">
                       <div className="booking-title-row">
                         <h3>Seat {booking.seatNumber || booking.seatId}</h3>
                         <span className={`badge badge-${status}`}>
-                          {statusLabel}
+                          {status === 'active' ? 'Booked' : 'Upcoming'}
                         </span>
                       </div>
                       <div className="booking-meta">
@@ -367,29 +390,123 @@ export default function StudentSeats() {
                           <span>{countdown}</span>
                         </div>
                       )}
-                      {status === 'expired' && (
-                        <div className="booking-expired-info">
-                          This slot has expired. The seat is now available for other students.
-                        </div>
-                      )}
                     </div>
-                    {isConfirmed && (
-                      <button
-                        type="button"
-                        className="danger cancel-button"
-                        onClick={() => handleCancelBooking(booking)}
-                        disabled={cancellingId === booking.id}
-                      >
-                        <X size={15} />
-                        {cancellingId === booking.id ? 'Cancelling…' : 'Cancel'}
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      className="danger cancel-button"
+                      onClick={() => handleCancelBooking(booking)}
+                      disabled={cancellingId === booking.id}
+                    >
+                      <X size={15} />
+                      {cancellingId === booking.id ? 'Cancelling…' : 'Cancel'}
+                    </button>
                   </article>
                 );
               })}
             </div>
           )}
         </section>
+      )}
+
+      {isStudent && isHistoryOpen && (
+        <div className="booking-history-overlay">
+          <button
+            type="button"
+            className="booking-history-scrim"
+            aria-label="Close booking history"
+            onClick={() => setIsHistoryOpen(false)}
+          />
+          <aside
+            id="booking-history-drawer"
+            className="booking-history-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="booking-history-title"
+          >
+            <section className="panel-card booking-history">
+              <div className="section-heading">
+                <div>
+                  <p className="eyebrow">Your reservations</p>
+                  <h2 id="booking-history-title">Booking history</h2>
+                </div>
+                <div className="booking-history-actions">
+                  <span className="summary-box">{historyBookings.length} past</span>
+                  <button
+                    type="button"
+                    className="icon-button"
+                    aria-label="Close booking history"
+                    onClick={() => setIsHistoryOpen(false)}
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+              </div>
+
+              {historyBookings.length === 0 ? (
+                <div className="empty-state">No past bookings yet. Active and upcoming reservations appear on the seating page.</div>
+              ) : (
+                <div className="booking-list">
+                  {historyBookings.map((booking) => {
+                    const status = getBookingStatusAt(booking, now);
+                    const countdown = getBookingCountdown(booking, status, now);
+                    const isConfirmed = booking.status === 'CONFIRMED' && status !== 'expired';
+                    const statusLabel = status === 'active' ? 'Booked'
+                      : status === 'upcoming' ? 'Upcoming'
+                        : status === 'expired' ? 'Expired'
+                          : status === 'cancelled' ? 'Cancelled' : 'Unknown';
+
+                    return (
+                      <article className={`booking-item booking-item-${status}`} key={booking.id}>
+                        <div className="booking-seat-icon">
+                          {status === 'expired' || status === 'cancelled' ? (
+                            <AlertCircle size={20} />
+                          ) : (
+                            <Armchair size={20} />
+                          )}
+                        </div>
+                        <div className="booking-details">
+                          <div className="booking-title-row">
+                            <h3>Seat {booking.seatNumber || booking.seatId}</h3>
+                            <span className={`badge badge-${status}`}>
+                              {statusLabel}
+                            </span>
+                          </div>
+                          <div className="booking-meta">
+                            <span><MapPin size={14} /> {booking.floor} floor</span>
+                            <span><CalendarDays size={14} /> {formatDate(booking.bookingDate)}</span>
+                            <span><Clock3 size={14} /> {formatTime(booking.startTime)}–{formatTime(booking.endTime)}</span>
+                          </div>
+                          {countdown && (
+                            <div className={`booking-expiry-info booking-expiry-${status}`}>
+                              <Hourglass size={13} />
+                              <span>{countdown}</span>
+                            </div>
+                          )}
+                          {status === 'expired' && (
+                            <div className="booking-expired-info">
+                              This slot has expired. The seat is now available for other students.
+                            </div>
+                          )}
+                        </div>
+                        {isConfirmed && (
+                          <button
+                            type="button"
+                            className="danger cancel-button"
+                            onClick={() => handleCancelBooking(booking)}
+                            disabled={cancellingId === booking.id}
+                          >
+                            <X size={15} />
+                            {cancellingId === booking.id ? 'Cancelling…' : 'Cancel'}
+                          </button>
+                        )}
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          </aside>
+        </div>
       )}
 
       {isStudent && !user?.blocked && selectedSeat && (

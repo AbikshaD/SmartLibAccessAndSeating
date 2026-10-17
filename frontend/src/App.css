@@ -108,6 +108,66 @@
   gap: 16px;
 }
 
+.page-header-actions,
+.booking-history-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.history-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.booking-history-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+}
+
+.booking-history-scrim {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: rgba(15, 23, 42, 0.42);
+  cursor: pointer;
+}
+
+.booking-history-drawer {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: min(560px, 100%);
+  overflow-y: auto;
+  background: #f8fafc;
+  box-shadow: -18px 0 45px rgba(15, 23, 42, 0.18);
+  animation: booking-history-enter 0.2s ease-out;
+}
+
+.booking-history-drawer .booking-history {
+  min-height: 100%;
+  padding: 26px;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+@keyframes booking-history-enter {
+  from {
+    transform: translateX(24px);
+    opacity: 0.75;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
 .page-header h1,
 .auth-header h1,
 .access-card h1 {
@@ -1115,6 +1175,15 @@ th {
     flex-direction: column;
   }
 
+  .page-header-actions {
+    align-self: stretch;
+    justify-content: flex-end;
+  }
+
+  .booking-history-drawer .booking-history {
+    padding: 20px;
+  }
+
   .booking-item {
     align-items: flex-start;
     flex-wrap: wrap;
@@ -1966,4 +2035,3 @@ th {
   line-height: 1.55;
   white-space: pre-line;
 }
-
