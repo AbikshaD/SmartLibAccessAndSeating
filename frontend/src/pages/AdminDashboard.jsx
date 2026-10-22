@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Megaphone, Users, Armchair, PlusCircle, ArrowRight } from 'lucide-react';
+import { Megaphone, Users, Armchair, PlusCircle, ArrowRight, ClipboardList } from 'lucide-react';
 import { seatApi } from '../api/seatApi';
 import { userApi } from '../api/userApi';
 import { announcementApi } from '../api/announcementApi';
+import { borrowApi } from '../api/borrowApi';
 import ErrorMessage from '../components/ErrorMessage';
 import LoadingState from '../components/LoadingState';
 
@@ -11,6 +12,7 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [seats, setSeats] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
+  const [pendingBorrows, setPendingBorrows] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -19,15 +21,17 @@ export default function AdminDashboard() {
 
     const loadData = async () => {
       try {
-        const [usersResponse, seatsResponse, annResponse] = await Promise.all([
+        const [usersResponse, seatsResponse, annResponse, borrowsResponse] = await Promise.all([
           userApi.getAllUsers(),
           seatApi.getAllSeats(),
-          announcementApi.getAllAnnouncements()
+          announcementApi.getAllAnnouncements(),
+          borrowApi.getAllBorrows()
         ]);
         if (!active) return;
         setUsers(usersResponse || []);
         setSeats(seatsResponse || []);
         setAnnouncements(annResponse || []);
+        setPendingBorrows((borrowsResponse || []).filter((borrow) => borrow.status === 'PENDING').length);
       } catch (err) {
         if (!active) return;
         setError(err.message || 'Unable to load admin data.');
@@ -92,6 +96,15 @@ export default function AdminDashboard() {
             <small className="stat-card-hint" style={{ color: '#b91c1c' }}>
               {closuresCount} active closure/urgent alert(s) →
             </small>
+          )}
+        </Link>
+        <Link to="/admin/borrows" className="stat-card stat-card-link" title="Review Borrow Requests">
+          <span>
+            <ClipboardList size={15} /> Borrow Requests
+          </span>
+          <strong>{pendingBorrows} Pending</strong>
+          {pendingBorrows > 0 && (
+            <small className="stat-card-hint">Student requests need your approval →</small>
           )}
         </Link>
       </div>

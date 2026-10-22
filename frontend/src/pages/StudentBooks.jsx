@@ -1,9 +1,7 @@
-import { useEffect, useState } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useEffect, useState, useMemo } from 'react';
 import {
   BookOpen,
   Book,
-  Bookmark,
   Layers,
   Search,
   MapPin,
@@ -11,14 +9,16 @@ import {
   Hash,
   CheckCircle2,
   Clock,
-  RotateCcw,
   Sparkles,
-  ArrowRight,
+  X,
   Armchair
 } from 'lucide-react';
 import { bookApi } from '../api/bookApi';
+import { borrowApi } from '../api/borrowApi';
 import LoadingState from '../components/LoadingState';
 import ErrorMessage from '../components/ErrorMessage';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const GENRE_METADATA = {
   'Computer Science': {
@@ -59,12 +59,21 @@ const GENRE_METADATA = {
   }
 };
 
-export default function StudentBooks() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const selectedGenre = searchParams.get('genre') || '';
+const formatDate = (date) => {
+  if (!date) return '—';
+  const [year, month, day] = date.split('-').map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+};
 
+export default function StudentBooks() {
+  const { role } = useAuth();
   const [genres, setGenres] = useState([]);
   const [allBooks, setAllBooks] = useState([]);
+  const [myBorrows, setMyBorrows] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -75,76 +84,56 @@ export default function StudentBooks() {
     const loadData = async () => {
       try {
         setLoading(true);
-        const [genresData, booksData] = await Promise.all([
+        const [genresData, booksData, borrowData] = await Promise.all([
           bookApi.getGenres(),
-          bookApi.getAllBooks()
+          bookApi.getAllBooks(),
+          role === 'STUDENT' ? borrowApi.getMyBorrows() : Promise.resolve([])
         ]);
-
         if (!active) return;
         setGenres(genresData);
         setAllBooks(booksData);
+        setMyBorrows(borrowData || []);
       } catch (err) {
         if (!active) return;
         setError(err.message || 'Failed to load library catalog.');
       } finally {
-        if (active) {
-          setLoading(false);
-        }
+        if (active) setLoading(false);
       }
     };
 
     loadData();
+    return () => { active = false; };
+  }, [role]);
 
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  const handleSelectGenre = (genreName) => {
-    if (selectedGenre.toLowerCase() === genreName.toLowerCase()) {
-      // Toggle off to view all
-      setSearchParams({});
-    } else {
-      setSearchParams({ genre: genreName });
+  const requestBorrow = async (bookId) => {
+    try {
+      const borrow = await borrowApi.requestBorrow(bookId);
+      setMyBorrows((currentBorrows) => [borrow, ...currentBorrows]);
+      alert('Borrow request sent to admin.');
+    } catch (err) {
+      alert(err.message || 'Failed to request borrow.');
     }
-    setSearchTerm('');
   };
 
-  const handleClearGenre = () => {
-    setSearchParams({});
-    setSearchTerm('');
-  };
+  // When a search term is entered, filter genres and books that match the genre name
+  const searchedGenre = searchTerm.trim().toLowerCase();
 
-  // Filter books according to selected genre and search
-  const booksForSelectedGenre = !selectedGenre
-    ? allBooks
-    : allBooks.filter(
-        (b) => b.genre.toLowerCase() === selectedGenre.toLowerCase()
-      );
+  const matchedGenres = useMemo(() => {
+    if (!searchedGenre) return genres;
+    return genres.filter((g) => g.genre.toLowerCase().includes(searchedGenre));
+  }, [searchedGenre, genres]);
 
-  const displayedBooks = !searchTerm.trim()
-    ? booksForSelectedGenre
-    : booksForSelectedGenre.filter((b) => {
-        const term = searchTerm.toLowerCase();
-        return (
-          b.title.toLowerCase().includes(term) ||
-          b.author.toLowerCase().includes(term) ||
-          (b.isbn && b.isbn.toLowerCase().includes(term)) ||
-          (b.description && b.description.toLowerCase().includes(term))
-        );
-      });
+  // For each matched genre, get its books
+  const booksByGenre = useMemo(() => {
+    return matchedGenres.map((g) => ({
+      genre: g,
+      books: allBooks.filter((b) => b.genre.toLowerCase() === g.genre.toLowerCase())
+    }));
+  }, [matchedGenres, allBooks]);
 
-  // Total statistics
-  const totalBooksCount = allBooks.length;
-  const totalGenresCount = genres.length;
+  const totalCopies = allBooks.reduce((acc, b) => acc + (b.availableCopies || 0), 0);
 
-  const selectedGenreBookCount = selectedGenre
-    ? booksForSelectedGenre.length
-    : totalBooksCount;
-
-  if (loading) {
-    return <LoadingState message="Loading book collection and genres..." />;
-  }
+  if (loading) return <LoadingState message="Loading book collection and genres..." />;
 
   return (
     <div className="page-container">
@@ -152,320 +141,237 @@ export default function StudentBooks() {
       <header className="page-header">
         <div>
           <p className="eyebrow">Library Catalog</p>
-          <h1>Books & Genres</h1>
+          <h1>Books &amp; Genres</h1>
           <p className="page-subtitle">
-            Explore diverse book genres, discover available titles, and check shelf locations.
+            Search a genre to explore available titles and check shelf locations.
           </p>
-        </div>
-        <div className="inline-actions">
-          <Link to="/student/seats" className="secondary link-button" style={{ marginTop: 0 }}>
-            <Armchair size={16} />
-            <span>Book a Study Seat</span>
-          </Link>
         </div>
       </header>
 
       <ErrorMessage message={error} />
 
-      {/* Top Stats Overview */}
+      {/* Stats */}
       <div className="stats-grid">
         <div className="stat-card">
-          <span>
-            <Layers size={16} /> Total Genres
-          </span>
-          <strong>{totalGenresCount}</strong>
+          <span><Layers size={16} /> Total Genres</span>
+          <strong>{genres.length}</strong>
         </div>
-
         <div className="stat-card accent">
-          <span>
-            <BookOpen size={16} /> Total Books
-          </span>
-          <strong>{totalBooksCount}</strong>
+          <span><BookOpen size={16} /> Total Books</span>
+          <strong>{allBooks.length}</strong>
         </div>
-
         <div className="stat-card">
-          <span>
-            <Bookmark size={16} />
-            {selectedGenre ? `Books in "${selectedGenre}"` : 'Active Selection'}
-          </span>
-          <strong>
-            {selectedGenre ? `${selectedGenreBookCount} Books` : 'All Genres'}
-          </strong>
-        </div>
-
-        <div className="stat-card">
-          <span>
-            <Sparkles size={16} /> Total Copies Available
-          </span>
-          <strong>
-            {allBooks.reduce((acc, b) => acc + (b.availableCopies || 0), 0)}
-          </strong>
+          <span><Sparkles size={16} /> Copies Available</span>
+          <strong>{totalCopies}</strong>
         </div>
       </div>
 
-      {/* Genre Categories Section */}
+      {/* Search Bar */}
       <section className="panel-card">
         <div className="section-heading">
           <div>
-            <p className="eyebrow">Browse by Category</p>
-            <h2>Book Genres</h2>
+            <p className="eyebrow">Search</p>
+            <h2>Find a Genre</h2>
           </div>
-          {selectedGenre && (
+          {searchTerm && (
             <button
               type="button"
               className="secondary"
-              onClick={handleClearGenre}
+              onClick={() => setSearchTerm('')}
               style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
             >
-              <RotateCcw size={14} />
-              <span>Show All Genres</span>
+              <X size={14} />
+              <span>Clear</span>
             </button>
           )}
         </div>
 
-        <p className="genre-instruction">
-          Click any genre below to view the total number of books and explore available titles:
-        </p>
+        <div className="search-wrap" style={{ marginTop: '0.75rem' }}>
+          <Search size={16} className="search-icon" />
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Type a genre name, e.g. Fiction, Science, History..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            autoFocus
+          />
+          {searchTerm && (
+            <button
+              type="button"
+              className="clear-search-btn"
+              onClick={() => setSearchTerm('')}
+            >
+              ✕
+            </button>
+          )}
+        </div>
 
-        <div className="genre-grid">
-          {genres.map((item) => {
-            const isSelected =
-              selectedGenre.toLowerCase() === item.genre.toLowerCase();
-            const meta = GENRE_METADATA[item.genre] || {
-              color: '#4f46e5',
-              bg: '#eef2ff',
-              border: '#c7d2fe',
-              description: 'Collection of curated titles in this category.'
-            };
+        {searchTerm && (
+          <p className="search-status-text" style={{ marginTop: '0.5rem' }}>
+            {matchedGenres.length === 0
+              ? `No genres found matching "${searchTerm}".`
+              : `Showing ${matchedGenres.length} genre${matchedGenres.length > 1 ? 's' : ''} matching "${searchTerm}".`}
+          </p>
+        )}
+      </section>
 
-            return (
-              <div
-                key={item.genre}
-                className={`genre-card ${isSelected ? 'selected' : ''}`}
-                onClick={() => handleSelectGenre(item.genre)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    handleSelectGenre(item.genre);
-                  }
-                }}
-              >
-                <div className="genre-card-header">
+      {/* Genres + Books — one section per genre */}
+      {booksByGenre.length === 0 && searchTerm ? (
+        <div className="panel-card empty-catalog-state">
+          <Book size={44} className="empty-icon" />
+          <h3>No genres found</h3>
+          <p>Try a different keyword or clear the search to see all genres.</p>
+          <button type="button" className="secondary" onClick={() => setSearchTerm('')}>
+            Show All Genres
+          </button>
+        </div>
+      ) : (
+        booksByGenre.map(({ genre: genreItem, books }) => {
+          const meta = GENRE_METADATA[genreItem.genre] || {
+            color: '#4f46e5',
+            bg: '#eef2ff',
+            border: '#c7d2fe',
+            description: 'Collection of curated titles in this category.'
+          };
+
+          return (
+            <section key={genreItem.genre} className="panel-card" style={{ marginBottom: '1.5rem' }}>
+              {/* Genre Header */}
+              <div className="section-heading" style={{ marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                   <div
                     className="genre-icon-pill"
                     style={{ backgroundColor: meta.bg, color: meta.color }}
                   >
                     <Book size={20} />
                   </div>
-                  {/* Genre Book Count Badge */}
-                  <span
-                    className="genre-count-badge"
-                    style={{
-                      backgroundColor: isSelected ? '#1d4ed8' : meta.bg,
-                      color: isSelected ? '#ffffff' : meta.color,
-                      borderColor: meta.border
-                    }}
-                  >
-                    {item.bookCount} {item.bookCount === 1 ? 'Book' : 'Books'}
-                  </span>
+                  <div>
+                    <p className="eyebrow" style={{ color: meta.color }}>{meta.description}</p>
+                    <h2 style={{ margin: 0 }}>{genreItem.genre}</h2>
+                  </div>
                 </div>
-
-                <h3 className="genre-card-title">{item.genre}</h3>
-                <p className="genre-card-desc">{meta.description}</p>
-
-                <div className="genre-card-footer">
-                  <span className="genre-click-action">
-                    {isSelected ? 'Active Genre (Click to reset)' : 'Click to view books'}
-                  </span>
-                  <ArrowRight
-                    size={16}
-                    className={`genre-arrow ${isSelected ? 'rotated' : ''}`}
-                  />
-                </div>
+                <span
+                  className="genre-count-badge"
+                  style={{
+                    backgroundColor: meta.bg,
+                    color: meta.color,
+                    borderColor: meta.border
+                  }}
+                >
+                  {genreItem.bookCount} {genreItem.bookCount === 1 ? 'Book' : 'Books'}
+                </span>
               </div>
-            );
-          })}
-        </div>
-      </section>
 
-      {/* Selected Genre Banner & Number of Books Announcement */}
-      {selectedGenre && (
-        <div className="genre-count-banner" role="region" aria-label="Genre Summary">
-          <div className="genre-banner-icon">
-            <BookOpen size={28} />
-          </div>
-          <div className="genre-banner-text">
-            <span className="genre-banner-tag">Selected Genre</span>
-            <h2>{selectedGenre}</h2>
-            <p>
-              There are <strong className="count-highlight">{booksForSelectedGenre.length}</strong>{' '}
-              {booksForSelectedGenre.length === 1 ? 'book' : 'books'} currently cataloged in this genre,
-              with <strong>{booksForSelectedGenre.reduce((sum, b) => sum + (b.availableCopies || 0), 0)}</strong> copies ready on library shelves.
-            </p>
-          </div>
-          <button
-            type="button"
-            className="secondary genre-banner-clear"
-            onClick={handleClearGenre}
-          >
-            Clear Filter
-          </button>
-        </div>
-      )}
+              {/* Books Grid for this genre */}
+              {books.length === 0 ? (
+                <div className="empty-state">No books available in this genre at the moment.</div>
+              ) : (
+                <div className="books-grid">
+                  {books.map((book) => {
+                    const hasCopies = (book.availableCopies || 0) > 0;
+                    const currentBorrow = role === 'STUDENT'
+                      ? myBorrows.find((borrow) => borrow.bookId === book.id && ['APPROVED', 'OVERDUE'].includes(borrow.status))
+                        || myBorrows.find((borrow) => borrow.bookId === book.id && borrow.status === 'PENDING')
+                      : null;
+                    const isBorrowed = currentBorrow?.status === 'APPROVED' || currentBorrow?.status === 'OVERDUE';
+                    const bookMeta = GENRE_METADATA[book.genre] || {
+                      color: '#2563eb',
+                      bg: '#eff6ff',
+                      border: '#bfdbfe'
+                    };
 
-      {/* Books List Section */}
-      <section className="panel-card">
-        <div className="toolbar-row">
-          <div>
-            <p className="eyebrow">
-              {selectedGenre ? `Genre: ${selectedGenre}` : 'All Library Holdings'}
-            </p>
-            <h2>
-              {selectedGenre
-                ? `${selectedGenre} Collection (${booksForSelectedGenre.length} ${booksForSelectedGenre.length === 1 ? 'Book' : 'Books'})`
-                : `All Books (${allBooks.length} Books)`}
-            </h2>
-          </div>
+                    return (
+                      <div key={book.id || book.title} className="book-card">
+                        <div className="book-card-header">
+                          <span
+                            className="book-genre-pill"
+                            style={{
+                              backgroundColor: bookMeta.bg,
+                              color: bookMeta.color,
+                              borderColor: bookMeta.border
+                            }}
+                          >
+                            {book.genre}
+                          </span>
+                          <span className={`badge ${hasCopies ? 'success' : 'warning'}`}>
+                            {hasCopies ? (
+                              <>
+                                <CheckCircle2 size={12} style={{ marginRight: '4px' }} />
+                                {book.availableCopies} of {book.totalCopies} Available
+                              </>
+                            ) : (
+                              <>
+                                <Clock size={12} style={{ marginRight: '4px' }} />
+                                Checked Out
+                              </>
+                            )}
+                          </span>
+                        </div>
 
-          <div className="search-wrap">
-            <Search size={16} className="search-icon" />
-            <input
-              type="text"
-              className="search-input"
-              placeholder={
-                selectedGenre
-                  ? `Search inside ${selectedGenre}...`
-                  : 'Search books by title, author, or ISBN...'
-              }
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            {searchTerm && (
-              <button
-                type="button"
-                className="clear-search-btn"
-                onClick={() => setSearchTerm('')}
-              >
-                ✕
-              </button>
-            )}
-          </div>
-        </div>
+                        <h3 className="book-title">{book.title}</h3>
+                        <p className="book-author">by {book.author}</p>
 
-        {searchTerm && (
-          <p className="search-status-text">
-            Found <strong>{displayedBooks.length}</strong> {displayedBooks.length === 1 ? 'book' : 'books'} matching &quot;{searchTerm}&quot;
-            {selectedGenre && ` in ${selectedGenre}`}.
-          </p>
-        )}
+                        {book.description && (
+                          <p className="book-description">{book.description}</p>
+                        )}
 
-        {displayedBooks.length === 0 ? (
-          <div className="empty-catalog-state">
-            <Book size={44} className="empty-icon" />
-            <h3>No books found</h3>
-            <p>
-              {searchTerm
-                ? 'Try adjusting your search keywords or clear the filter.'
-                : 'No books available for this genre at the moment.'}
-            </p>
-            {searchTerm && (
-              <button
-                type="button"
-                className="secondary"
-                onClick={() => setSearchTerm('')}
-              >
-                Clear Search
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="books-grid">
-            {displayedBooks.map((book) => {
-              const hasCopies = (book.availableCopies || 0) > 0;
-              const meta = GENRE_METADATA[book.genre] || {
-                color: '#2563eb',
-                bg: '#eff6ff',
-                border: '#bfdbfe'
-              };
+                        <div className="book-details-list">
+                          {book.shelfLocation && (
+                            <div className="book-detail-item">
+                              <MapPin size={14} className="detail-icon" />
+                              <span><strong>Location:</strong> {book.shelfLocation}</span>
+                            </div>
+                          )}
+                          {book.publicationYear && (
+                            <div className="book-detail-item">
+                              <Calendar size={14} className="detail-icon" />
+                              <span><strong>Published:</strong> {book.publicationYear}</span>
+                            </div>
+                          )}
+                          {book.isbn && (
+                            <div className="book-detail-item">
+                              <Hash size={14} className="detail-icon" />
+                              <span><strong>ISBN:</strong> {book.isbn}</span>
+                            </div>
+                          )}
+                        </div>
 
-              return (
-                <div key={book.id || book.title} className="book-card">
-                  <div className="book-card-header">
-                    <span
-                      className="book-genre-pill"
-                      style={{
-                        backgroundColor: meta.bg,
-                        color: meta.color,
-                        borderColor: meta.border
-                      }}
-                      onClick={() => handleSelectGenre(book.genre)}
-                      title={`Filter by ${book.genre}`}
-                    >
-                      {book.genre}
-                    </span>
-
-                    <span className={`badge ${hasCopies ? 'success' : 'warning'}`}>
-                      {hasCopies ? (
-                        <>
-                          <CheckCircle2 size={12} style={{ marginRight: '4px' }} />
-                          {book.availableCopies} of {book.totalCopies} Available
-                        </>
-                      ) : (
-                        <>
-                          <Clock size={12} style={{ marginRight: '4px' }} />
-                          Checked Out
-                        </>
-                      )}
-                    </span>
-                  </div>
-
-                  <h3 className="book-title">{book.title}</h3>
-                  <p className="book-author">by {book.author}</p>
-
-                  {book.description && (
-                    <p className="book-description">{book.description}</p>
-                  )}
-
-                  <div className="book-details-list">
-                    {book.shelfLocation && (
-                      <div className="book-detail-item">
-                        <MapPin size={14} className="detail-icon" />
-                        <span>
-                          <strong>Location:</strong> {book.shelfLocation}
-                        </span>
+                        {role === 'STUDENT' && (
+                          <div className="book-card-actions">
+                            {currentBorrow ? (
+                              <div className="book-detail-item" role="status">
+                                {isBorrowed ? (
+                                  <span><strong>Borrowed</strong> · Due {formatDate(currentBorrow.dueDate)}</span>
+                                ) : (
+                                  <span><strong>Borrow request pending</strong></span>
+                                )}
+                              </div>
+                            ) : (
+                              <button
+                                className="primary book-action-btn"
+                                onClick={() => requestBorrow(book.id)}
+                                disabled={!hasCopies}
+                                style={{ marginRight: '8px' }}
+                              >
+                                <BookOpen size={14} /> Borrow
+                              </button>
+                            )}
+                            <Link to="/student/seats" className="secondary book-action-btn">
+                              <Armchair size={14} />
+                              <span>Reserve Seat to Read</span>
+                            </Link>
+                          </div>
+                        )}
                       </div>
-                    )}
-                    {book.publicationYear && (
-                      <div className="book-detail-item">
-                        <Calendar size={14} className="detail-icon" />
-                        <span>
-                          <strong>Published:</strong> {book.publicationYear}
-                        </span>
-                      </div>
-                    )}
-                    {book.isbn && (
-                      <div className="book-detail-item">
-                        <Hash size={14} className="detail-icon" />
-                        <span>
-                          <strong>ISBN:</strong> {book.isbn}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="book-card-actions">
-                    <Link to="/student/seats" className="secondary book-action-btn">
-                      <Armchair size={14} />
-                      <span>Reserve Seat to Read</span>
-                    </Link>
-                  </div>
+                    );
+                  })}
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
+              )}
+            </section>
+          );
+        })
+      )}
     </div>
   );
 }

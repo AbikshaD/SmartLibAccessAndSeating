@@ -1,10 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import {
   Armchair,
-  BookOpen,
-  ArrowRight,
-  BookMarked,
   Megaphone,
   Clock,
   AlertTriangle,
@@ -16,7 +12,6 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { seatApi } from '../api/seatApi';
-import { bookApi } from '../api/bookApi';
 import { announcementApi } from '../api/announcementApi';
 import LoadingState from '../components/LoadingState';
 import ErrorMessage from '../components/ErrorMessage';
@@ -33,8 +28,6 @@ export default function StudentDashboard() {
   const { user } = useAuth();
   const [allSeats, setAllSeats] = useState([]);
   const [availableSeats, setAvailableSeats] = useState([]);
-  const [genres, setGenres] = useState([]);
-  const [totalBooks, setTotalBooks] = useState(0);
   const [announcements, setAnnouncements] = useState([]);
   const [dismissedAnnouncements, setDismissedAnnouncements] = useState([]);
   const [showAllAnnouncements, setShowAllAnnouncements] = useState(false);
@@ -46,18 +39,14 @@ export default function StudentDashboard() {
 
     const loadDashboard = async () => {
       try {
-        const [seats, available, genresData, booksData, announcementsData] = await Promise.all([
+        const [seats, available, announcementsData] = await Promise.all([
           seatApi.getAllSeats(),
           seatApi.getAvailableSeats(),
-          bookApi.getGenres(),
-          bookApi.getAllBooks(),
           announcementApi.getActiveAnnouncements()
         ]);
         if (!active) return;
         setAllSeats(seats);
         setAvailableSeats(available);
-        setGenres(genresData || []);
-        setTotalBooks((booksData && booksData.length) || 0);
         setAnnouncements(announcementsData || []);
       } catch (err) {
         if (!active) return;
@@ -96,14 +85,8 @@ export default function StudentDashboard() {
           <p className="eyebrow">Student dashboard</p>
           <h1>Welcome, {user?.name || user?.studentId}</h1>
           <p className="page-subtitle">
-            Manage your study seats, discover library book genres, and check official notices.
+            Manage your study seats and check official library notices.
           </p>
-        </div>
-        <div className="inline-actions">
-          <Link to="/student/books" className="primary-button link-button" style={{ marginTop: 0 }}>
-            <BookOpen size={16} />
-            <span>Open Books Catalog</span>
-          </Link>
         </div>
       </header>
 
@@ -228,62 +211,9 @@ export default function StudentDashboard() {
           <span>Occupancy</span>
           <strong>{allSeats.length ? `${Math.round(((allSeats.length - availableSeats.length) / allSeats.length) * 100)}%` : '0%'}</strong>
         </div>
-        <Link to="/student/books" className="stat-card stat-card-link" title="Click to view Books">
-          <span>
-            <BookOpen size={15} /> Books Catalog
-          </span>
-          <strong>{totalBooks} Books</strong>
-          <small className="stat-card-hint">Across {genres.length} genres →</small>
-        </Link>
       </div>
 
-      {/* Featured Books Feature Panel */}
-      <section className="panel-card dashboard-books-panel">
-        <div className="dashboard-books-header">
-          <div className="dashboard-books-badge">
-            <BookOpen size={24} />
-          </div>
-          <div>
-            <p className="eyebrow">Library Resources</p>
-            <h2>Books & Genre Catalog</h2>
-            <p className="dashboard-books-desc">
-              Browse our diverse collection of physical library books organized by genre. Click any genre to see the exact number of books and check real-time shelf availability.
-            </p>
-          </div>
-        </div>
-
-        <div className="dashboard-genres-preview">
-          <span className="eyebrow" style={{ display: 'block', marginBottom: '8px' }}>
-            Popular Genres:
-          </span>
-          <div className="filter-group">
-            {genres.map((g) => (
-              <Link
-                key={g.genre}
-                to={`/student/books?genre=${encodeURIComponent(g.genre)}`}
-                className="filter-chip dashboard-genre-pill"
-              >
-                <span>{g.genre}</span>
-                <span className="genre-pill-count">{g.bookCount}</span>
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        <div className="dashboard-books-footer">
-          <Link to="/student/books" className="primary-button link-button" style={{ marginTop: 0 }}>
-            <BookMarked size={16} />
-            <span>Explore All Books & Genres</span>
-            <ArrowRight size={16} />
-          </Link>
-          <Link to="/student/seats" className="secondary link-button" style={{ marginTop: 0 }}>
-            <Armchair size={16} />
-            <span>Book a Seat to Study</span>
-          </Link>
-        </div>
-      </section>
-
-      {/* Student Profile Quick View */}
+      {/* Library Quick View */}
       <section className="panel-card">
         <h2>Library quick view</h2>
         <div className="quick-grid">

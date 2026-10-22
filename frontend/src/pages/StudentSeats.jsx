@@ -100,7 +100,7 @@ export default function StudentSeats() {
   const [selectedSeat, setSelectedSeat] = useState(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [form, setForm] = useState(getFutureBookingWindow);
-  const [selectedFloor, setSelectedFloor] = useState('All');
+  const [selectedFloor, setSelectedFloor] = useState('GROUND');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [cancellingId, setCancellingId] = useState('');
@@ -150,13 +150,15 @@ export default function StudentSeats() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isHistoryOpen]);
 
-  const floorOptions = useMemo(() => {
-    const floors = [...new Set(seats.map((seat) => seat.floor).filter(Boolean))].sort();
-    return ['All', ...floors];
-  }, [seats]);
+  const floorOptions = [
+    { value: 'GROUND', label: 'Ground' },
+    { value: 'FIRST', label: 'First' },
+    { value: 'SECOND', label: 'Second' },
+    { value: 'THIRD', label: 'Third' },
+  ];
 
   const filteredSeats = useMemo(
-    () => (selectedFloor === 'All' ? seats : seats.filter((seat) => seat.floor === selectedFloor)),
+    () => seats.filter((seat) => seat.floor === selectedFloor && seat.status === 'AVAILABLE'),
     [selectedFloor, seats],
   );
 
@@ -586,18 +588,18 @@ export default function StudentSeats() {
         </div>
         <div className="toolbar-row">
           <div className="filter-group" aria-label="Floor filter">
-            {floorOptions.map((floor) => (
+            {floorOptions.map(({ value, label }) => (
               <button
-                key={floor}
+                key={value}
                 type="button"
-                className={`filter-chip ${selectedFloor === floor ? 'selected' : ''}`}
-                onClick={() => setSelectedFloor(floor)}
+                className={`filter-chip ${selectedFloor === value ? 'selected' : ''}`}
+                onClick={() => setSelectedFloor(value)}
               >
-                {floor}
+                {label}
               </button>
             ))}
           </div>
-          <div className="summary-box">{availableCount} of {seats.length} seats available</div>
+          <div className="summary-box">{filteredSeats.length} available on {floorOptions.find(f => f.value === selectedFloor)?.label} floor</div>
         </div>
         <SeatGrid
           seats={filteredSeats}

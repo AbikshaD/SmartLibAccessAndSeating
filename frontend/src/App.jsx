@@ -6,6 +6,7 @@ import AccessDenied from './pages/AccessDenied';
 import AdminAnnouncements from './pages/AdminAnnouncements';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminFeedback from './pages/AdminFeedback';
+import AdminBorrows from './pages/AdminBorrows';
 import AdminSeats from './pages/AdminSeats';
 import AdminUsers from './pages/AdminUsers';
 import Login from './pages/Login';
@@ -46,6 +47,8 @@ function AppRoutes() {
 
       <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
         <Route path="/admin" element={<Layout><AdminDashboard /></Layout>} />
+        <Route path="/admin/books" element={<Layout><StudentBooks /></Layout>} />
+        <Route path="/admin/borrows" element={<Layout><AdminBorrows /></Layout>} />
         <Route path="/admin/announcements" element={<Layout><AdminAnnouncements /></Layout>} />
         <Route path="/admin/users" element={<Layout><AdminUsers /></Layout>} />
         <Route path="/admin/seats" element={<Layout><AdminSeats /></Layout>} />
