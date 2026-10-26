@@ -10,6 +10,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -48,6 +49,14 @@ public class UserController {
 		return ResponseEntity.created(URI.create("/users/" + createdUser.getId())).body(createdUser);
 	}
 
+	@PostMapping("/maintenance-admin")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<User> createMaintenanceAdmin(@Valid @RequestBody User user) {
+		user.setRole("MAINTENANCE_ADMIN");
+		User createdUser = userService.createUser(user);
+		return ResponseEntity.created(URI.create("/users/" + createdUser.getId())).body(createdUser);
+	}
+
 	@GetMapping
 	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<List<User>> getAllUsers() {
@@ -55,7 +64,7 @@ public class UserController {
 	}
 
 	@PostMapping("/maintenance")
-	@PreAuthorize("hasRole('ADMIN')")
+	@PreAuthorize("hasRole('MAINTENANCE_ADMIN')")
 	public ResponseEntity<User> createMaintenanceUser(@Valid @RequestBody CreateMaintenanceUserRequest request) {
 		User createdUser = userService.createMaintenanceUser(request.studentId(), request.name(), request.email(),
 				request.password(), request.team());
@@ -63,35 +72,37 @@ public class UserController {
 	}
 
 	@GetMapping("/maintenance")
-	@PreAuthorize("hasRole('ADMIN')")
+	@PreAuthorize("hasRole('MAINTENANCE_ADMIN')")
 	public ResponseEntity<List<User>> getMaintenanceUsers() {
 		return ResponseEntity.ok(userService.getMaintenanceUsers());
 	}
 
 	@GetMapping("/{id}")
-	@PreAuthorize("hasRole('ADMIN') or #id == authentication.name")
+	@PreAuthorize("hasAnyRole('ADMIN', 'MAINTENANCE_ADMIN') or #id == authentication.name")
 	public ResponseEntity<User> getUserById(@PathVariable String id) {
 		return ResponseEntity.ok(userService.getUserById(id));
 	}
 
 	@PutMapping("/{id}")
-	@PreAuthorize("hasRole('ADMIN') or #id == authentication.name")
+	@PreAuthorize("hasAnyRole('ADMIN', 'MAINTENANCE_ADMIN') or #id == authentication.name")
 	public ResponseEntity<User> updateUser(@PathVariable String id, @Valid @RequestBody User user) {
 		return ResponseEntity.ok(userService.updateUser(id, user));
 	}
 
 	@PutMapping("/{id}/maintenance-team")
-	@PreAuthorize("hasRole('ADMIN')")
+	@PreAuthorize("hasRole('MAINTENANCE_ADMIN')")
 	public ResponseEntity<User> updateMaintenanceTeam(@PathVariable String id,
 			@Valid @RequestBody MaintenanceTeamRequest request) {
 		return ResponseEntity.ok(userService.updateMaintenanceTeam(id, request.team()));
 	}
 
 	@PutMapping("/{id}/active")
-	@PreAuthorize("hasRole('ADMIN')")
+	@PreAuthorize("hasAnyRole('ADMIN', 'MAINTENANCE_ADMIN')")
 	public ResponseEntity<User> updateMaintenanceAccountStatus(@PathVariable String id,
-			@Valid @RequestBody AccountStatusRequest request) {
-		return ResponseEntity.ok(userService.updateMaintenanceAccountStatus(id, request.active()));
+			@Valid @RequestBody AccountStatusRequest request, Authentication authentication) {
+		boolean admin = authentication.getAuthorities().stream()
+				.anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
+		return ResponseEntity.ok(userService.updateAccountStatus(id, request.active(), admin));
 	}
 
 	@PutMapping("/{id}/unblock")
@@ -107,6 +118,7 @@ public class UserController {
 	}
 
 	@DeleteMapping("/{id}")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<Void> deleteUser(@PathVariable String id) {
 		userService.deleteUser(id);
 		return ResponseEntity.noContent().build();

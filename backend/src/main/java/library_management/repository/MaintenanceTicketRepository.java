@@ -9,4 +9,6 @@ import library_management.model.MaintenanceTicket;
 
 public interface MaintenanceTicketRepository extends MongoRepository<MaintenanceTicket, String> {
     List<MaintenanceTicket> findByTeamOrderBySubmittedAtDesc(MaintenanceTeam team);
+
+    List<MaintenanceTicket> findAllByOrderBySubmittedAtDesc();
 }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { AlertCircle, CheckCircle2, Clock3, RefreshCw, Wrench } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Clock3, RefreshCw, Send, Wrench } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { maintenanceApi } from '../api/maintenanceApi';
 import { useAuth } from '../context/AuthContext';
@@ -13,12 +13,16 @@ const formatDate = (value) => {
 };
 
 const label = (value) => value?.replaceAll('_', ' ') || 'Unknown';
+const priorities = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
 
 export default function MaintenanceDashboard() {
   const { user } = useAuth();
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [report, setReport] = useState({ description: '', floor: '', priority: 'MEDIUM' });
 
   const loadDashboard = useCallback(async () => {
     try {
@@ -35,6 +39,26 @@ export default function MaintenanceDashboard() {
   useEffect(() => {
     loadDashboard();
   }, [loadDashboard]);
+
+  const submitReport = async (event) => {
+    event.preventDefault();
+    setError('');
+    setSuccess('');
+    setSubmitting(true);
+    try {
+      const ticket = await maintenanceApi.reportIssue({
+        description: report.description.trim(),
+        floor: report.floor.trim(),
+        priority: report.priority,
+      });
+      setReport({ description: '', floor: '', priority: 'MEDIUM' });
+      setSuccess(`Issue submitted for triage as ticket ${ticket.id}.`);
+    } catch (err) {
+      setError(err.message || 'Unable to submit this maintenance issue.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   if (loading) return <LoadingState message="Loading your team dashboard..." />;
 
@@ -60,6 +84,7 @@ export default function MaintenanceDashboard() {
       </header>
 
       <ErrorMessage message={error} />
+      {success && <div className="success-box" role="status">{success}</div>}
 
       <div className="stats-grid maintenance-stats">
         {summary.map(({ label: title, count, icon: Icon, style }) => (
@@ -69,6 +94,55 @@ export default function MaintenanceDashboard() {
           </div>
         ))}
       </div>
+
+      <section className="panel-card maintenance-form-card">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Report an issue</p>
+            <h2><Send size={20} /> Submit for Maintenance Admin triage</h2>
+          </div>
+        </div>
+        <form className="stack-form" onSubmit={submitReport}>
+          <div className="two-column-form">
+            <label>
+              Library floor / location
+              <input
+                value={report.floor}
+                onChange={(event) => setReport((current) => ({ ...current, floor: event.target.value }))}
+                maxLength={100}
+                required
+              />
+            </label>
+            <label>
+              Priority
+              <select
+                value={report.priority}
+                onChange={(event) => setReport((current) => ({ ...current, priority: event.target.value }))}
+              >
+                {priorities.map((priority) => <option key={priority} value={priority}>{priority}</option>)}
+              </select>
+            </label>
+          </div>
+          <label>
+            Issue description
+            <textarea
+              value={report.description}
+              onChange={(event) => setReport((current) => ({ ...current, description: event.target.value }))}
+              maxLength={2000}
+              rows={4}
+              required
+            />
+            <span className="field-hint">{report.description.length} / 2000</span>
+          </label>
+          <button className="primary-button" type="submit" disabled={submitting}>
+            <Send size={16} />
+            {submitting ? 'Submitting...' : 'Submit issue'}
+          </button>
+        </form>
+        <p className="maintenance-api-note">
+          New reports are sent to Maintenance Admin for team assignment and appear in your team queue after assignment.
+        </p>
+      </section>
 
       <section className="panel-card">
         <div className="section-heading">

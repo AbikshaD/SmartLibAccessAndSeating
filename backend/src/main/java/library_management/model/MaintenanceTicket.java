@@ -28,8 +28,9 @@ public class MaintenanceTicket {
     @Id
     private String id;
 
-    @NotNull
     private MaintenanceTeam team;
+
+    private String reportedBy;
 
     @NotBlank
     @Size(max = 2000)
@@ -44,11 +45,14 @@ public class MaintenanceTicket {
 
     private Status status;
     private LocalDateTime submittedAt;
+    private String resolutionNotes;
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public MaintenanceTeam getTeam() { return team; }
     public void setTeam(MaintenanceTeam team) { this.team = team; }
+    public String getReportedBy() { return reportedBy; }
+    public void setReportedBy(String reportedBy) { this.reportedBy = reportedBy; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
     public String getFloor() { return floor; }
@@ -59,4 +63,6 @@ public class MaintenanceTicket {
     public void setStatus(Status status) { this.status = status; }
     public LocalDateTime getSubmittedAt() { return submittedAt; }
     public void setSubmittedAt(LocalDateTime submittedAt) { this.submittedAt = submittedAt; }
+    public String getResolutionNotes() { return resolutionNotes; }
+    public void setResolutionNotes(String resolutionNotes) { this.resolutionNotes = resolutionNotes; }
 }

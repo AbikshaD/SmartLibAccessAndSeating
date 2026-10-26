@@ -23,6 +23,20 @@ export const userApi = {
     });
   },
 
+  createMaintenanceAdmin(user) {
+    return apiRequest('/users/maintenance-admin', {
+      method: 'POST',
+      body: user,
+    });
+  },
+
+  setActive(studentId, active) {
+    return apiRequest(`/users/${encodeURIComponent(studentId)}/active`, {
+      method: 'PUT',
+      body: { active },
+    });
+  },
+
   updateUser(studentId, user) {
     return apiRequest(`/users/${studentId}`, {
       method: 'PUT',

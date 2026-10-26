@@ -8,6 +8,28 @@ export const maintenanceApi = {
     });
   },
 
+  reportIssue(issue) {
+    return apiRequest('/maintenance/reports', {
+      method: 'POST',
+      body: issue,
+    });
+  },
+
+  getAllManagementTickets() {
+    return apiRequest('/maintenance/management/tickets');
+  },
+
+  getManagementTicket(ticketId) {
+    return apiRequest(`/maintenance/management/tickets/${encodeURIComponent(ticketId)}`);
+  },
+
+  assignTeam(ticketId, team) {
+    return apiRequest(`/maintenance/tickets/${encodeURIComponent(ticketId)}/team`, {
+      method: 'PUT',
+      body: { team },
+    });
+  },
+
   getDashboard() {
     return apiRequest('/maintenance/dashboard');
   },
@@ -16,10 +38,10 @@ export const maintenanceApi = {
     return apiRequest(`/maintenance/tickets/${encodeURIComponent(ticketId)}`);
   },
 
-  updateTicketStatus(ticketId, status) {
+  updateTicketStatus(ticketId, status, resolutionNotes) {
     return apiRequest(`/maintenance/tickets/${encodeURIComponent(ticketId)}/status`, {
       method: 'PUT',
-      body: { status },
+      body: { status, resolutionNotes },
     });
   },
 };

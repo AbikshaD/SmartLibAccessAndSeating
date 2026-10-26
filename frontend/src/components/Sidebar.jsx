@@ -18,16 +18,20 @@ const adminLinks = [
   { to: '/admin/users', label: 'Users', icon: Users },
   { to: '/admin/announcements', label: 'Announcements', icon: Megaphone },
   { to: '/admin/feedback', label: 'Feedback', icon: MessageSquareText },
-  { to: '/admin/maintenance', label: 'Maintenance', icon: Wrench },
 ];
 
 const maintenanceLinks = [
   { to: '/maintenance', label: 'Team tickets', icon: Wrench },
 ];
 
+const maintenanceAdminLinks = [
+  { to: '/maintenance-admin', label: 'Operations', icon: Wrench },
+];
+
 export default function Sidebar() {
   const { user, logout, role } = useAuth();
   const links = role === 'ADMIN' ? adminLinks
+    : role === 'MAINTENANCE_ADMIN' ? maintenanceAdminLinks
     : role === 'MAINTENANCE' ? maintenanceLinks : studentLinks;
 
   return (
@@ -38,7 +42,8 @@ export default function Sidebar() {
         </div>
         <div>
           <p className="eyebrow">SmartLib</p>
-          <h2>{role === 'MAINTENANCE' ? 'Maintenance' : 'Library Access'}</h2>
+          <h2>{role === 'MAINTENANCE_ADMIN' ? 'Maintenance Admin'
+            : role === 'MAINTENANCE' ? 'Maintenance' : 'Library Access'}</h2>
         </div>
       </div>
 

@@ -36,6 +36,31 @@ public class MaintenanceTicketService {
         return ticketRepository.save(ticket);
     }
 
+    public MaintenanceTicket reportIssue(String studentId, ReportIssueRequest request) {
+        MaintenanceTicket ticket = new MaintenanceTicket();
+        ticket.setReportedBy(studentId);
+        ticket.setDescription(request.description().trim());
+        ticket.setFloor(request.floor().trim());
+        ticket.setPriority(request.priority());
+        ticket.setStatus(MaintenanceTicket.Status.OPEN);
+        ticket.setSubmittedAt(LocalDateTime.now());
+        return ticketRepository.save(ticket);
+    }
+
+    public List<MaintenanceTicket> getAllTickets() {
+        return ticketRepository.findAllByOrderBySubmittedAtDesc();
+    }
+
+    public MaintenanceTicket getTicketForManagement(String ticketId) {
+        return findTicket(ticketId);
+    }
+
+    public MaintenanceTicket assignTeam(String ticketId, MaintenanceTeam team) {
+        MaintenanceTicket ticket = findTicket(ticketId);
+        ticket.setTeam(team);
+        return ticketRepository.save(ticket);
+    }
+
     public Dashboard getDashboard(String studentId) {
         MaintenanceTeam team = getMaintenanceTeam(studentId);
         List<MaintenanceTicket> tickets = ticketRepository.findByTeamOrderBySubmittedAtDesc(team);
@@ -47,15 +72,27 @@ public class MaintenanceTicketService {
         return new Dashboard(team, tickets, openCount, inProgressCount, resolvedCount);
     }
 
-    public MaintenanceTicket getTicket(String ticketId, String studentId) {
+    public MaintenanceTicket getTicket(String ticketId, String studentId, boolean maintenanceAdmin) {
+        if (maintenanceAdmin) {
+            return findTicket(ticketId);
+        }
         MaintenanceTeam team = getMaintenanceTeam(studentId);
         return findTicketForTeam(ticketId, team);
     }
 
-    public MaintenanceTicket updateStatus(String ticketId, String studentId, MaintenanceTicket.Status status) {
-        MaintenanceTeam team = getMaintenanceTeam(studentId);
-        MaintenanceTicket ticket = findTicketForTeam(ticketId, team);
+    public MaintenanceTicket updateStatus(String ticketId, String studentId, boolean maintenanceAdmin,
+            MaintenanceTicket.Status status, String resolutionNotes) {
+        MaintenanceTicket ticket;
+        if (maintenanceAdmin) {
+            ticket = findTicket(ticketId);
+        } else {
+            MaintenanceTeam team = getMaintenanceTeam(studentId);
+            ticket = findTicketForTeam(ticketId, team);
+        }
         ticket.setStatus(status);
+        if (resolutionNotes != null) {
+            ticket.setResolutionNotes(resolutionNotes.trim());
+        }
         return ticketRepository.save(ticket);
     }
 
@@ -69,13 +106,22 @@ public class MaintenanceTicketService {
     }
 
     private MaintenanceTicket findTicketForTeam(String ticketId, MaintenanceTeam team) {
+        MaintenanceTicket ticket = findTicket(ticketId);
+        if (ticket.getTeam() != team) {
+            throw new MaintenanceTicketNotFoundException(ticketId);
+        }
+        return ticket;
+    }
+
+    private MaintenanceTicket findTicket(String ticketId) {
         return ticketRepository.findById(ticketId)
-                .filter(ticket -> ticket.getTeam() == team)
                 .orElseThrow(() -> new MaintenanceTicketNotFoundException(ticketId));
     }
 
     public record CreateTicketRequest(MaintenanceTeam team, String description, String floor,
             MaintenanceTicket.Priority priority) { }
+
+    public record ReportIssueRequest(String description, String floor, MaintenanceTicket.Priority priority) { }
 
     public record Dashboard(MaintenanceTeam team, List<MaintenanceTicket> tickets,
             long openCount, long inProgressCount, long resolvedCount) { }

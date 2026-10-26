@@ -280,6 +280,19 @@
   background: #fbfdff;
 }
 
+.maintenance-ticket-actions {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.maintenance-status-form label textarea {
+  display: block;
+  width: 100%;
+  margin-top: 7px;
+}
+
 .maintenance-ticket-heading,
 .maintenance-ticket-meta,
 .maintenance-status-form {
@@ -1446,6 +1459,11 @@ th {
 
   .maintenance-ticket-heading {
     align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .maintenance-ticket-actions {
+    align-items: stretch;
     flex-direction: column;
   }
 

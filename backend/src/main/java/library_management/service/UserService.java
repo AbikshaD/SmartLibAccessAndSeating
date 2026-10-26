@@ -69,8 +69,10 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public User updateMaintenanceAccountStatus(String studentId, boolean active) {
-        User user = findMaintenanceUser(studentId);
+    public User updateAccountStatus(String studentId, boolean active, boolean admin) {
+        User user = admin ? userRepository.findByStudentId(studentId)
+                .orElseThrow(() -> new UserNotFoundException(studentId))
+                : findMaintenanceUser(studentId);
         user.setActive(active);
         return userRepository.save(user);
     }

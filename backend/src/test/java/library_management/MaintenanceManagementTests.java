@@ -56,10 +56,12 @@ class MaintenanceManagementTests {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private String adminId;
+    private String maintenanceAdminId;
     private String studentId;
     private String networkId;
     private String electricalId;
     private String adminToken;
+    private String maintenanceAdminToken;
     private String studentToken;
     private String networkToken;
     private String electricalToken;
@@ -68,15 +70,18 @@ class MaintenanceManagementTests {
     void setUp() throws Exception {
         String suffix = UUID.randomUUID().toString().substring(0, 8);
         adminId = "maintenance-admin-" + suffix;
+        maintenanceAdminId = "maintenance-operations-admin-" + suffix;
         studentId = "maintenance-student-" + suffix;
         networkId = "maintenance-network-" + suffix;
         electricalId = "maintenance-electrical-" + suffix;
 
         saveUser(adminId, "ADMIN");
+        saveUser(maintenanceAdminId, "MAINTENANCE_ADMIN");
         saveUser(studentId, "STUDENT");
         saveUser(networkId, "MAINTENANCE", "NETWORK");
         saveUser(electricalId, "MAINTENANCE", "ELECTRICAL");
         adminToken = login(adminId);
+        maintenanceAdminToken = login(maintenanceAdminId);
         studentToken = login(studentId);
         networkToken = login(networkId);
         electricalToken = login(electricalId);
@@ -86,18 +91,19 @@ class MaintenanceManagementTests {
     void cleanUp() {
         ticketRepository.deleteAll();
         userRepository.findByStudentId(adminId).ifPresent(userRepository::delete);
+        userRepository.findByStudentId(maintenanceAdminId).ifPresent(userRepository::delete);
         userRepository.findByStudentId(studentId).ifPresent(userRepository::delete);
         userRepository.findByStudentId(networkId).ifPresent(userRepository::delete);
         userRepository.findByStudentId(electricalId).ifPresent(userRepository::delete);
     }
 
     @Test
-    void adminCanCreateListAssignAndDeactivateMaintenanceAccounts() throws Exception {
+    void maintenanceAdminCanCreateListAssignAndDeactivateMaintenanceAccounts() throws Exception {
         String newId = "maintenance-new-" + UUID.randomUUID().toString().substring(0, 8);
         String newEmail = newId + "@example.com";
 
         MvcResult created = mockMvc.perform(post("/users/maintenance")
-                        .header("Authorization", "Bearer " + adminToken)
+                        .header("Authorization", "Bearer " + maintenanceAdminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(maintenanceUserJson(newId, newEmail, "HOUSEKEEPING")))
                 .andExpect(status().isCreated())
@@ -109,12 +115,12 @@ class MaintenanceManagementTests {
         String createdToken = loginFromResponse(created, PASSWORD);
 
         mockMvc.perform(get("/users/maintenance")
-                        .header("Authorization", "Bearer " + adminToken))
+                        .header("Authorization", "Bearer " + maintenanceAdminToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[?(@.studentId=='" + newId + "')]").exists());
 
         mockMvc.perform(put("/users/" + newId + "/maintenance-team")
-                        .header("Authorization", "Bearer " + adminToken)
+                        .header("Authorization", "Bearer " + maintenanceAdminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"team\":\"IT_SUPPORT\"}"))
                 .andExpect(status().isOk())
@@ -126,7 +132,7 @@ class MaintenanceManagementTests {
                 .andExpect(jsonPath("$.team").value("IT_SUPPORT"));
 
         mockMvc.perform(put("/users/" + newId + "/active")
-                        .header("Authorization", "Bearer " + adminToken)
+                        .header("Authorization", "Bearer " + maintenanceAdminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"active\":false}"))
                 .andExpect(status().isOk())
@@ -141,13 +147,16 @@ class MaintenanceManagementTests {
                 .andExpect(status().isUnauthorized());
 
         mockMvc.perform(put("/users/" + newId + "/active")
-                        .header("Authorization", "Bearer " + adminToken)
+                        .header("Authorization", "Bearer " + maintenanceAdminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"active\":true}"))
                 .andExpect(status().isOk());
         assertTrue(userRepository.findByStudentId(newId).orElseThrow().isActive());
 
         userRepository.findByStudentId(newId).ifPresent(userRepository::delete);
+
+        mockMvc.perform(get("/users/maintenance").header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -156,6 +165,15 @@ class MaintenanceManagementTests {
         String networkInProgressId = createTicket("NETWORK", "Wi-Fi access point issue", "First", "MEDIUM");
         String networkResolvedId = createTicket("NETWORK", "Switch replacement", "Ground", "LOW");
         String electricalId = createTicket("ELECTRICAL", "Lighting fault", "Third", "URGENT");
+
+        mockMvc.perform(get("/maintenance/management/tickets")
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(get("/maintenance/management/tickets")
+                        .header("Authorization", "Bearer " + maintenanceAdminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(4));
 
         mockMvc.perform(put("/maintenance/tickets/" + networkInProgressId + "/status")
                         .header("Authorization", "Bearer " + networkToken)
@@ -203,12 +221,50 @@ class MaintenanceManagementTests {
                 .andExpect(jsonPath("$.priority").value("HIGH"))
                 .andExpect(jsonPath("$.submittedAt").isNotEmpty());
 
+        mockMvc.perform(put("/maintenance/tickets/" + electricalId + "/team")
+                        .header("Authorization", "Bearer " + maintenanceAdminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"team\":\"NETWORK\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.team").value("NETWORK"));
+
+        mockMvc.perform(put("/maintenance/tickets/" + electricalId + "/status")
+                        .header("Authorization", "Bearer " + maintenanceAdminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"RESOLVED\",\"resolutionNotes\":\"Replaced faulty cable.\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("RESOLVED"))
+                .andExpect(jsonPath("$.resolutionNotes").value("Replaced faulty cable."));
+
+        MvcResult report = mockMvc.perform(post("/maintenance/reports")
+                        .header("Authorization", "Bearer " + networkToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"description\":\"Damaged network cabinet\",\"floor\":\"Ground\","
+                                + "\"priority\":\"HIGH\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.team").doesNotExist())
+                .andExpect(jsonPath("$.reportedBy").value(networkId))
+                .andReturn();
+        String reportId = objectMapper.readTree(report.getResponse().getContentAsString()).get("id").asText();
+        mockMvc.perform(get("/maintenance/management/tickets/" + reportId)
+                        .header("Authorization", "Bearer " + maintenanceAdminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.reportedBy").value(networkId));
+        mockMvc.perform(put("/maintenance/tickets/" + reportId + "/team")
+                        .header("Authorization", "Bearer " + maintenanceAdminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"team\":\"NETWORK\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.team").value("NETWORK"));
+
         mockMvc.perform(get("/maintenance/dashboard").header("Authorization", "Bearer " + studentToken))
                 .andExpect(status().isForbidden());
         mockMvc.perform(post("/maintenance/tickets")
                         .header("Authorization", "Bearer " + studentToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(ticketJson("NETWORK", "Test", "Ground", "LOW")))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/users").header("Authorization", "Bearer " + maintenanceAdminToken))
                 .andExpect(status().isForbidden());
     }
 
@@ -225,7 +281,7 @@ class MaintenanceManagementTests {
 
     private String createTicket(String team, String description, String floor, String priority) throws Exception {
         MvcResult result = mockMvc.perform(post("/maintenance/tickets")
-                        .header("Authorization", "Bearer " + adminToken)
+                        .header("Authorization", "Bearer " + maintenanceAdminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(ticketJson(team, description, floor, priority)))
                 .andExpect(status().isCreated())

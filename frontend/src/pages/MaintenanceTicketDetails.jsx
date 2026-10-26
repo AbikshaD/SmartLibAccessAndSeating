@@ -4,11 +4,18 @@ import { Link, useParams } from 'react-router-dom';
 import { maintenanceApi } from '../api/maintenanceApi';
 import ErrorMessage from '../components/ErrorMessage';
 import LoadingState from '../components/LoadingState';
+import { useAuth } from '../context/AuthContext';
 
 const statuses = [
   { value: 'OPEN', label: 'Open' },
   { value: 'IN_PROGRESS', label: 'In progress' },
   { value: 'RESOLVED', label: 'Resolved' },
+];
+const teams = [
+  { value: 'NETWORK', label: 'Network' },
+  { value: 'ELECTRICAL', label: 'Electrical' },
+  { value: 'IT_SUPPORT', label: 'IT Support' },
+  { value: 'HOUSEKEEPING', label: 'Housekeeping' },
 ];
 
 const formatDate = (value) => {
@@ -19,8 +26,12 @@ const formatDate = (value) => {
 
 export default function MaintenanceTicketDetails() {
   const { ticketId } = useParams();
+  const { role } = useAuth();
+  const isMaintenanceAdmin = role === 'MAINTENANCE_ADMIN';
   const [ticket, setTicket] = useState(null);
   const [status, setStatus] = useState('OPEN');
+  const [team, setTeam] = useState('');
+  const [resolutionNotes, setResolutionNotes] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -28,16 +39,20 @@ export default function MaintenanceTicketDetails() {
 
   const loadTicket = useCallback(async () => {
     try {
-      const data = await maintenanceApi.getTicket(ticketId);
+      const data = isMaintenanceAdmin
+        ? await maintenanceApi.getManagementTicket(ticketId)
+        : await maintenanceApi.getTicket(ticketId);
       setTicket(data);
       setStatus(data.status);
+      setTeam(data.team || '');
+      setResolutionNotes(data.resolutionNotes || '');
       setError('');
     } catch (err) {
       setError(err.message || 'Unable to load this ticket.');
     } finally {
       setLoading(false);
     }
-  }, [ticketId]);
+  }, [isMaintenanceAdmin, ticketId]);
 
   useEffect(() => {
     loadTicket();
@@ -49,12 +64,30 @@ export default function MaintenanceTicketDetails() {
     setError('');
     setSuccess('');
     try {
-      const updated = await maintenanceApi.updateTicketStatus(ticket.id, status);
+      const updated = await maintenanceApi.updateTicketStatus(ticket.id, status, resolutionNotes.trim());
       setTicket(updated);
       setStatus(updated.status);
+      setResolutionNotes(updated.resolutionNotes || '');
       setSuccess('Ticket status updated.');
     } catch (err) {
       setError(err.message || 'Unable to update ticket status.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveTeam = async () => {
+    if (!team || team === ticket.team) return;
+    setSaving(true);
+    setError('');
+    setSuccess('');
+    try {
+      const updated = await maintenanceApi.assignTeam(ticket.id, team);
+      setTicket(updated);
+      setTeam(updated.team || '');
+      setSuccess('Ticket team assignment updated.');
+    } catch (err) {
+      setError(err.message || 'Unable to update the assigned team.');
     } finally {
       setSaving(false);
     }
@@ -70,9 +103,9 @@ export default function MaintenanceTicketDetails() {
           <h1>Ticket details</h1>
           <p className="page-subtitle">Review the issue and update its status.</p>
         </div>
-        <Link to="/maintenance" className="secondary maintenance-details-link">
+        <Link to={isMaintenanceAdmin ? '/maintenance-admin' : '/maintenance'} className="secondary maintenance-details-link">
           <ArrowLeft size={16} />
-          Team dashboard
+          {isMaintenanceAdmin ? 'Maintenance operations' : 'Team dashboard'}
         </Link>
       </header>
 
@@ -96,10 +129,28 @@ export default function MaintenanceTicketDetails() {
 
           <dl className="maintenance-ticket-facts">
             <div><dt>Library floor</dt><dd>{ticket.floor}</dd></div>
-            <div><dt>Assigned team</dt><dd>{ticket.team?.replaceAll('_', ' ')}</dd></div>
+            <div><dt>Assigned team</dt><dd>{ticket.team?.replaceAll('_', ' ') || 'Unassigned'}</dd></div>
             <div><dt>Submitted</dt><dd>{formatDate(ticket.submittedAt)}</dd></div>
             <div><dt>Ticket ID</dt><dd>{ticket.id}</dd></div>
           </dl>
+
+          {isMaintenanceAdmin && (
+            <div className="maintenance-status-form">
+              <label>
+                Assigned team
+                <select value={team} onChange={(event) => setTeam(event.target.value)}>
+                  <option value="">Unassigned</option>
+                  {teams.map((item) => (
+                    <option key={item.value} value={item.value}>{item.label}</option>
+                  ))}
+                </select>
+              </label>
+              <button className="secondary" type="button" onClick={saveTeam} disabled={saving || !team || team === ticket.team}>
+                <Save size={16} />
+                {saving ? 'Saving...' : 'Save team'}
+              </button>
+            </div>
+          )}
 
           <form className="maintenance-status-form" onSubmit={saveStatus}>
             <label>
@@ -110,14 +161,25 @@ export default function MaintenanceTicketDetails() {
                 ))}
               </select>
             </label>
-            <button className="primary-button" type="submit" disabled={saving || status === ticket.status}>
+            <label>
+              Resolution notes
+              <textarea
+                value={resolutionNotes}
+                onChange={(event) => setResolutionNotes(event.target.value)}
+                maxLength={2000}
+                rows={3}
+                placeholder="Add notes about the work completed or next steps."
+              />
+            </label>
+            <button
+              className="primary-button"
+              type="submit"
+              disabled={saving || (status === ticket.status && resolutionNotes === (ticket.resolutionNotes || ''))}
+            >
               {status === 'RESOLVED' ? <CheckCircle2 size={16} /> : <Save size={16} />}
               {saving ? 'Saving...' : 'Save status'}
             </button>
           </form>
-          <p className="maintenance-api-note">
-            Resolution notes are not supported by the current ticket API, so this page only saves the ticket status.
-          </p>
         </section>
       )}
     </div>

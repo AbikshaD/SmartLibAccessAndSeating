@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowRight, ClipboardPlus, RefreshCw, UserPlus, Users, Wrench } from 'lucide-react';
+import { ClipboardPlus, RefreshCw, UserPlus, Users, Wrench } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ErrorMessage from '../components/ErrorMessage';
 import LoadingState from '../components/LoadingState';
@@ -31,32 +31,48 @@ const initialTicketForm = {
 
 export default function AdminMaintenance() {
   const [staff, setStaff] = useState([]);
+  const [tickets, setTickets] = useState([]);
   const [staffForm, setStaffForm] = useState(initialStaffForm);
   const [ticketForm, setTicketForm] = useState(initialTicketForm);
+  const [loadingTickets, setLoadingTickets] = useState(true);
   const [loading, setLoading] = useState(true);
   const [staffSubmitting, setStaffSubmitting] = useState(false);
   const [ticketSubmitting, setTicketSubmitting] = useState(false);
   const [busyStaffId, setBusyStaffId] = useState('');
+  const [busyTicketId, setBusyTicketId] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const loadStaff = async () => {
-    const users = await maintenanceUserApi.getAll();
+  const loadData = async () => {
+    const [users, allTickets] = await Promise.all([
+      maintenanceUserApi.getAll(),
+      maintenanceApi.getAllManagementTickets(),
+    ]);
     setStaff(users || []);
+    setTickets(allTickets || []);
   };
 
   useEffect(() => {
     let active = true;
 
-    maintenanceUserApi.getAll()
-      .then((users) => {
-        if (active) setStaff(users || []);
+    Promise.all([
+      maintenanceUserApi.getAll(),
+      maintenanceApi.getAllManagementTickets(),
+    ])
+      .then(([users, allTickets]) => {
+        if (active) {
+          setStaff(users || []);
+          setTickets(allTickets || []);
+        }
       })
       .catch((err) => {
-        if (active) setError(err.message || 'Unable to load maintenance staff.');
+        if (active) setError(err.message || 'Unable to load maintenance operations.');
       })
       .finally(() => {
-        if (active) setLoading(false);
+        if (active) {
+          setLoading(false);
+          setLoadingTickets(false);
+        }
       });
 
     return () => {
@@ -103,15 +119,6 @@ export default function AdminMaintenance() {
     }
   };
 
-  const handleRefreshStaff = async () => {
-    setError('');
-    try {
-      await loadStaff();
-    } catch (err) {
-      setError(err.message || 'Unable to refresh maintenance staff.');
-    }
-  };
-
   const handleActiveChange = async (user) => {
     setError('');
     setSuccess('');
@@ -141,6 +148,7 @@ export default function AdminMaintenance() {
         floor: ticketForm.floor.trim(),
       });
       setTicketForm(initialTicketForm);
+      setTickets((current) => [ticket, ...current]);
       setSuccess(`Ticket ${ticket.id} was assigned to ${teamLabel(ticket.team)}.`);
     } catch (err) {
       setError(err.message || 'Unable to create the maintenance ticket.');
@@ -149,20 +157,42 @@ export default function AdminMaintenance() {
     }
   };
 
-  if (loading) return <LoadingState message="Loading maintenance staff..." />;
+  const handleRefresh = async () => {
+    setError('');
+    try {
+      await loadData();
+    } catch (err) {
+      setError(err.message || 'Unable to refresh maintenance operations.');
+    }
+  };
+
+  const handleAssignTeam = async (ticket, team) => {
+    setError('');
+    setSuccess('');
+    setBusyTicketId(ticket.id);
+    try {
+      const updated = await maintenanceApi.assignTeam(ticket.id, team);
+      setTickets((current) => current.map((entry) => (
+        entry.id === updated.id ? updated : entry
+      )));
+      setSuccess(`Ticket ${ticket.id} assigned to ${teamLabel(team)}.`);
+    } catch (err) {
+      setError(err.message || 'Unable to assign this ticket.');
+    } finally {
+      setBusyTicketId('');
+    }
+  };
+
+  if (loading) return <LoadingState message="Loading maintenance operations..." />;
 
   return (
     <div className="page-container">
       <header className="page-header">
         <div>
-          <p className="eyebrow">Administration</p>
+          <p className="eyebrow">Maintenance administration</p>
           <h1>Maintenance operations</h1>
-          <p className="page-subtitle">Manage team accounts and route new work to the responsible team.</p>
+          <p className="page-subtitle">Manage maintenance staff and triage tickets reported across the library.</p>
         </div>
-        <Link to="/admin" className="secondary maintenance-back-link">
-          <ArrowRight size={16} />
-          Admin overview
-        </Link>
       </header>
 
       <ErrorMessage message={error} />
@@ -236,12 +266,12 @@ export default function AdminMaintenance() {
           <div className="section-heading">
             <div>
               <p className="eyebrow">Ticket intake</p>
-              <h2><ClipboardPlus size={20} /> Assign a ticket to a team</h2>
+              <h2><ClipboardPlus size={20} /> Create a ticket</h2>
             </div>
           </div>
           <form className="stack-form" onSubmit={handleCreateTicket}>
             <label>
-              Assign to team
+              Initial team
               <TeamSelect
                 value={ticketForm.team}
                 onChange={(team) => setTicketForm((current) => ({ ...current, team }))}
@@ -279,13 +309,9 @@ export default function AdminMaintenance() {
             </label>
             <button className="primary-button" type="submit" disabled={ticketSubmitting}>
               <Wrench size={16} />
-              {ticketSubmitting ? 'Assigning ticket...' : 'Create and assign'}
+              {ticketSubmitting ? 'Creating ticket...' : 'Create ticket'}
             </button>
           </form>
-          <p className="maintenance-api-note">
-            The current API supports creating a ticket for a team. It does not yet expose an admin ticket list,
-            reassignment, or AI classification endpoint.
-          </p>
         </section>
       </section>
 
@@ -297,7 +323,7 @@ export default function AdminMaintenance() {
           </div>
           <div className="page-header-actions">
             <span className="summary-box">{staff.length} staff</span>
-            <button type="button" className="secondary refresh-button" onClick={handleRefreshStaff}>
+            <button type="button" className="secondary refresh-button" onClick={handleRefresh}>
               <RefreshCw size={16} />
               Refresh
             </button>
@@ -339,6 +365,77 @@ export default function AdminMaintenance() {
           </div>
         )}
       </section>
+
+      <div className="stats-grid maintenance-stats">
+        <div className="stat-card maintenance-open">
+          <span>Open tickets</span>
+          <strong>{tickets.filter((ticket) => ticket.status === 'OPEN').length}</strong>
+        </div>
+        <div className="stat-card maintenance-progress">
+          <span>In progress</span>
+          <strong>{tickets.filter((ticket) => ticket.status === 'IN_PROGRESS').length}</strong>
+        </div>
+        <div className="stat-card maintenance-resolved">
+          <span>Resolved</span>
+          <strong>{tickets.filter((ticket) => ticket.status === 'RESOLVED').length}</strong>
+        </div>
+      </div>
+
+      <section className="panel-card">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Triage and assignment</p>
+            <h2><Wrench size={20} /> Maintenance tickets</h2>
+          </div>
+          <div className="page-header-actions">
+            <span className="summary-box">{tickets.length} tickets</span>
+            <button type="button" className="secondary refresh-button" onClick={handleRefresh}>
+              <RefreshCw size={16} />
+              Refresh
+            </button>
+          </div>
+        </div>
+        {loadingTickets ? (
+          <LoadingState message="Loading tickets..." />
+        ) : tickets.length === 0 ? (
+          <div className="empty-state">There are no maintenance tickets yet.</div>
+        ) : (
+          <div className="maintenance-ticket-list">
+            {tickets.map((ticket) => (
+              <article className="maintenance-ticket-card" key={ticket.id}>
+                <div className="maintenance-ticket-heading">
+                  <span className={`maintenance-priority priority-${ticket.priority?.toLowerCase()}`}>
+                    {ticket.priority || 'Unspecified'} priority
+                  </span>
+                  <span className={`maintenance-ticket-status status-${ticket.status?.toLowerCase()}`}>
+                    {ticket.status?.replaceAll('_', ' ') || 'Unknown'}
+                  </span>
+                </div>
+                <p className="maintenance-ticket-description">{ticket.description}</p>
+                <div className="maintenance-ticket-meta">
+                  <span>Floor: <strong>{ticket.floor || 'Not specified'}</strong></span>
+                  <span>Team: <strong>{teamLabel(ticket.team)}</strong></span>
+                  <span>Submitted: <strong>{formatDate(ticket.submittedAt)}</strong></span>
+                </div>
+                <div className="maintenance-ticket-actions">
+                  <label className="maintenance-inline-field">
+                    Assign team
+                    <TeamSelect
+                      value={ticket.team || ''}
+                      onChange={(team) => handleAssignTeam(ticket, team)}
+                      disabled={busyTicketId === ticket.id}
+                      aria-label={`Assign ticket ${ticket.id} to a team`}
+                    />
+                  </label>
+                  <Link className="secondary maintenance-details-link" to={`/maintenance-admin/tickets/${encodeURIComponent(ticket.id)}`}>
+                    View details
+                  </Link>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }
@@ -362,4 +459,10 @@ function TeamSelect({ value, onChange, disabled = false, ...props }) {
 
 function teamLabel(value) {
   return teams.find((team) => team.value === value)?.label || value || 'Unassigned';
+}
+
+function formatDate(value) {
+  if (!value) return 'Date unavailable';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
 }

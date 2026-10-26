@@ -25,8 +25,17 @@ export default function Login() {
       const currentUser = await login(form);
       const destination = currentUser?.role === 'ADMIN'
         ? '/admin'
-        : currentUser?.role === 'MAINTENANCE' ? '/maintenance' : '/student';
-      navigate(location.state?.from || destination, { replace: true });
+        : currentUser?.role === 'MAINTENANCE_ADMIN' ? '/maintenance-admin'
+          : currentUser?.role === 'MAINTENANCE' ? '/maintenance' : '/student';
+      const requestedPath = location.state?.from;
+      const allowedRequestedPath = currentUser?.role === 'ADMIN'
+        ? requestedPath?.startsWith('/admin')
+        : currentUser?.role === 'MAINTENANCE_ADMIN'
+          ? requestedPath?.startsWith('/maintenance-admin')
+          : currentUser?.role === 'MAINTENANCE'
+            ? requestedPath === '/maintenance' || requestedPath?.startsWith('/maintenance/')
+            : requestedPath?.startsWith('/student');
+      navigate(allowedRequestedPath ? requestedPath : destination, { replace: true });
     } catch (err) {
       setError(err.message || 'Unable to sign in. Please try again.');
     } finally {

@@ -31,7 +31,8 @@ function RedirectToDefault() {
 
   const destination = role === 'ADMIN'
     ? '/admin'
-    : role === 'MAINTENANCE' ? '/maintenance' : '/student';
+    : role === 'MAINTENANCE_ADMIN' ? '/maintenance-admin'
+      : role === 'MAINTENANCE' ? '/maintenance' : '/student';
   return <Navigate to={destination} replace />;
 }
 
@@ -53,13 +54,17 @@ function AppRoutes() {
 
       <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
         <Route path="/admin" element={<Layout><AdminDashboard /></Layout>} />
-        <Route path="/admin/maintenance" element={<Layout><AdminMaintenance /></Layout>} />
         <Route path="/admin/books" element={<Layout><StudentBooks /></Layout>} />
         <Route path="/admin/borrows" element={<Layout><AdminBorrows /></Layout>} />
         <Route path="/admin/announcements" element={<Layout><AdminAnnouncements /></Layout>} />
         <Route path="/admin/users" element={<Layout><AdminUsers /></Layout>} />
         <Route path="/admin/seats" element={<Layout><AdminSeats /></Layout>} />
         <Route path="/admin/feedback" element={<Layout><AdminFeedback /></Layout>} />
+      </Route>
+
+      <Route element={<ProtectedRoute allowedRoles={['MAINTENANCE_ADMIN']} />}>
+        <Route path="/maintenance-admin" element={<Layout><AdminMaintenance /></Layout>} />
+        <Route path="/maintenance-admin/tickets/:ticketId" element={<Layout><MaintenanceTicketDetails /></Layout>} />
       </Route>
 
       <Route element={<ProtectedRoute allowedRoles={['MAINTENANCE']} />}>

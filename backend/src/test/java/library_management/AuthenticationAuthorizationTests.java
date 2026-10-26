@@ -3,6 +3,7 @@ package library_management;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -37,18 +38,21 @@ class AuthenticationAuthorizationTests {
 
     private String studentId;
     private String adminId;
+    private String maintenanceAdminId;
 
     @BeforeEach
     void setUp() {
         String suffix = UUID.randomUUID().toString().substring(0, 8);
         studentId = "student-" + suffix;
         adminId = "admin-" + suffix;
+        maintenanceAdminId = "maintenance-admin-" + suffix;
     }
 
     @AfterEach
     void cleanUp() {
         userRepository.findByStudentId(studentId).ifPresent(userRepository::delete);
         userRepository.findByStudentId(adminId).ifPresent(userRepository::delete);
+        userRepository.findByStudentId(maintenanceAdminId).ifPresent(userRepository::delete);
     }
 
     @Test
@@ -132,6 +136,40 @@ class AuthenticationAuthorizationTests {
         mockMvc.perform(get("/users").header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk());
         userRepository.findByStudentId("second-" + adminId).ifPresent(userRepository::delete);
+
+        mockMvc.perform(post("/users/maintenance-admin")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(userJson(maintenanceAdminId, maintenanceAdminId + "@example.com",
+                                "maintenance-admin-pass", "STUDENT")))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.role").value("MAINTENANCE_ADMIN"));
+
+        String maintenanceAdminToken = login(maintenanceAdminId, "maintenance-admin-pass");
+        mockMvc.perform(get("/users").header("Authorization", "Bearer " + maintenanceAdminToken))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/users/admin")
+                        .header("Authorization", "Bearer " + maintenanceAdminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(userJson("forbidden-" + adminId, "forbidden-" + adminId + "@example.com",
+                                "maintenance-admin-pass", "ADMIN")))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/maintenance/management/tickets")
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/maintenance/management/tickets")
+                        .header("Authorization", "Bearer " + maintenanceAdminToken))
+                .andExpect(status().isOk());
+        mockMvc.perform(put("/users/" + maintenanceAdminId + "/active")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"active\":false}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.active").value(false));
+        mockMvc.perform(post("/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginJson(maintenanceAdminId, "maintenance-admin-pass")))
+                .andExpect(status().isUnauthorized());
     }
 
     private void registerStudent() throws Exception {
