@@ -1,4 +1,4 @@
-import { Armchair, BarChart3, BookOpen, ClipboardList, LayoutGrid, LogOut, Megaphone, MessageSquareText, ShieldCheck, UserRound, Users } from 'lucide-react';
+import { Armchair, BarChart3, BookOpen, ClipboardList, LayoutGrid, LogOut, Megaphone, MessageSquareText, ShieldCheck, UserRound, Users, Wrench } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -18,13 +18,17 @@ const adminLinks = [
   { to: '/admin/users', label: 'Users', icon: Users },
   { to: '/admin/announcements', label: 'Announcements', icon: Megaphone },
   { to: '/admin/feedback', label: 'Feedback', icon: MessageSquareText },
+  { to: '/admin/maintenance', label: 'Maintenance', icon: Wrench },
+];
+
+const maintenanceLinks = [
+  { to: '/maintenance', label: 'Team tickets', icon: Wrench },
 ];
 
 export default function Sidebar() {
   const { user, logout, role } = useAuth();
-  const links = role === 'ADMIN'
-    ? adminLinks
-    : studentLinks;
+  const links = role === 'ADMIN' ? adminLinks
+    : role === 'MAINTENANCE' ? maintenanceLinks : studentLinks;
 
   return (
     <aside className="sidebar">
@@ -34,7 +38,7 @@ export default function Sidebar() {
         </div>
         <div>
           <p className="eyebrow">SmartLib</p>
-          <h2>Library Access</h2>
+          <h2>{role === 'MAINTENANCE' ? 'Maintenance' : 'Library Access'}</h2>
         </div>
       </div>
 

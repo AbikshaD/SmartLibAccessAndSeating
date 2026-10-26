@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Megaphone, Users, Armchair, PlusCircle, ArrowRight, ClipboardList } from 'lucide-react';
+import { Megaphone, Users, Armchair, PlusCircle, ArrowRight, ClipboardList, Wrench } from 'lucide-react';
 import { seatApi } from '../api/seatApi';
 import { userApi } from '../api/userApi';
 import { announcementApi } from '../api/announcementApi';
@@ -106,6 +106,11 @@ export default function AdminDashboard() {
           {pendingBorrows > 0 && (
             <small className="stat-card-hint">Student requests need your approval →</small>
           )}
+        </Link>
+        <Link to="/admin/maintenance" className="stat-card stat-card-link" title="Manage maintenance teams and tickets">
+          <span><Wrench size={15} /> Maintenance</span>
+          <strong>Staff & tickets</strong>
+          <small className="stat-card-hint">Manage team accounts and assign work →</small>
         </Link>
       </div>
 

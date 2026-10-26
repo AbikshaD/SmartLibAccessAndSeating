@@ -10,6 +10,7 @@ import {
   ChevronUp,
   X
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { seatApi } from '../api/seatApi';
 import { announcementApi } from '../api/announcementApi';
@@ -212,6 +213,20 @@ export default function StudentDashboard() {
           <strong>{allSeats.length ? `${Math.round(((allSeats.length - availableSeats.length) / allSeats.length) * 100)}%` : '0%'}</strong>
         </div>
       </div>
+
+      <section className="panel-card maintenance-student-card">
+        <div>
+          <p className="eyebrow">Facilities</p>
+          <h2>Report a facilities concern</h2>
+          <p className="page-subtitle">
+            Submit it under Facilities in feedback and track its review status and library response.
+          </p>
+        </div>
+        <Link to="/student/feedback" className="primary-button link-button">
+          <Wrench size={16} />
+          Report an issue
+        </Link>
+      </section>
 
       {/* Library Quick View */}
       <section className="panel-card">

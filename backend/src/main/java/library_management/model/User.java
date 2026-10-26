@@ -34,6 +34,10 @@ public class User {
 
     private String role;
 
+    private MaintenanceTeam maintenanceTeam;
+
+    private boolean active = true;
+
     private boolean blocked;
 
     private String blockedReason;
@@ -86,6 +90,22 @@ public class User {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public MaintenanceTeam getMaintenanceTeam() {
+        return maintenanceTeam;
+    }
+
+    public void setMaintenanceTeam(MaintenanceTeam maintenanceTeam) {
+        this.maintenanceTeam = maintenanceTeam;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
     public boolean isBlocked() {

@@ -156,6 +156,252 @@
   box-shadow: none;
 }
 
+.maintenance-admin-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 18px;
+}
+
+.maintenance-student-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.maintenance-student-card h2 {
+  margin: 5px 0 0;
+  font-size: 1.2rem;
+}
+
+.maintenance-student-card .page-subtitle {
+  margin-bottom: 0;
+}
+
+.maintenance-form-card h2,
+.maintenance-staff-row h2,
+.maintenance-ticket-detail h2 {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.maintenance-form-card .stack-form {
+  margin-top: 0;
+}
+
+.maintenance-staff-list,
+.maintenance-ticket-list {
+  display: grid;
+  gap: 12px;
+}
+
+.maintenance-staff-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(150px, 0.8fr) auto auto;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #fbfdff;
+}
+
+.maintenance-student-card {
+  align-items: flex-start;
+  flex-direction: column;
+}
+
+.maintenance-staff-identity {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.maintenance-staff-identity span,
+.maintenance-session-note {
+  color: #64748b;
+  font-size: 0.86rem;
+  overflow-wrap: anywhere;
+}
+
+.maintenance-inline-field {
+  min-width: 0;
+}
+
+.maintenance-account-state,
+.maintenance-priority,
+.maintenance-ticket-status {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.is-active,
+.status-resolved {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.is-inactive,
+.status-open {
+  color: #9a3412;
+  background: #ffedd5;
+}
+
+.maintenance-stats .stat-card {
+  min-height: 112px;
+}
+
+.maintenance-open span {
+  color: #b45309;
+}
+
+.maintenance-progress span {
+  color: #1d4ed8;
+}
+
+.maintenance-resolved span {
+  color: #15803d;
+}
+
+.maintenance-ticket-card {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #fbfdff;
+}
+
+.maintenance-ticket-heading,
+.maintenance-ticket-meta,
+.maintenance-status-form {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.maintenance-priority {
+  color: #334155;
+  background: #f1f5f9;
+}
+
+.priority-high,
+.priority-urgent {
+  color: #b91c1c;
+  background: #fee2e2;
+}
+
+.priority-medium {
+  color: #a16207;
+  background: #fef3c7;
+}
+
+.priority-low {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.status-in_progress {
+  color: #1d4ed8;
+  background: #dbeafe;
+}
+
+.maintenance-ticket-description {
+  margin: 0;
+  color: #334155;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.maintenance-ticket-meta {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.maintenance-details-link,
+.maintenance-back-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: fit-content;
+  text-decoration: none;
+}
+
+.maintenance-ticket-detail {
+  display: grid;
+  gap: 20px;
+  max-width: 860px;
+}
+
+.maintenance-ticket-detail h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.maintenance-ticket-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0;
+}
+
+.maintenance-ticket-facts div {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.maintenance-ticket-facts dt {
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+.maintenance-ticket-facts dd {
+  margin: 4px 0 0;
+  color: #0f172a;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.maintenance-status-form {
+  justify-content: flex-start;
+  align-items: flex-end;
+}
+
+.maintenance-status-form label {
+  flex: 1;
+  max-width: 320px;
+}
+
+.maintenance-api-note {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.maintenance-session-note {
+  margin: 0;
+}
+
 @keyframes booking-history-enter {
   from {
     transform: translateX(24px);
@@ -1165,6 +1411,10 @@ th {
     margin-left: 0;
     padding: 20px;
   }
+
+  .maintenance-admin-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 640px) {
@@ -1173,6 +1423,34 @@ th {
   .section-heading {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .maintenance-staff-row {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .maintenance-staff-row > button,
+  .maintenance-inline-field select {
+    width: 100%;
+  }
+
+  .maintenance-status-form {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .maintenance-status-form label {
+    max-width: none;
+  }
+
+  .maintenance-ticket-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .maintenance-ticket-facts {
+    grid-template-columns: 1fr;
   }
 
   .page-header-actions {

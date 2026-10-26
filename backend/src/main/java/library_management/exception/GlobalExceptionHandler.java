@@ -45,6 +45,12 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.NOT_FOUND, exception.getMessage());
     }
 
+    @ExceptionHandler(MaintenanceTicketNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleMaintenanceTicketNotFound(
+            MaintenanceTicketNotFoundException exception) {
+        return error(HttpStatus.NOT_FOUND, exception.getMessage());
+    }
+
     @ExceptionHandler(BookNotFoundException.class)
     public ResponseEntity<Map<String, String>> handleBookNotFound(BookNotFoundException exception) {
         return error(HttpStatus.NOT_FOUND, exception.getMessage());
@@ -69,6 +75,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UnauthorizedFeedbackAccessException.class)
     public ResponseEntity<Map<String, String>> handleUnauthorizedFeedbackAccess(
             UnauthorizedFeedbackAccessException exception) {
+        return error(HttpStatus.FORBIDDEN, exception.getMessage());
+    }
+
+    @ExceptionHandler(MaintenanceTeamRequiredException.class)
+    public ResponseEntity<Map<String, String>> handleMaintenanceTeamRequired(
+            MaintenanceTeamRequiredException exception) {
         return error(HttpStatus.FORBIDDEN, exception.getMessage());
     }
 

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import library_management.exception.DuplicateEmailException;
 import library_management.exception.UserNotFoundException;
+import library_management.model.MaintenanceTeam;
 import library_management.model.User;
 import library_management.repository.UserRepository;
 
@@ -45,6 +46,35 @@ public class UserService {
         return userRepository.findAll();
     }
 
+    public User createMaintenanceUser(String studentId, String name, String email, String password,
+            MaintenanceTeam team) {
+        User user = new User();
+        user.setStudentId(studentId);
+        user.setName(name);
+        user.setEmail(email);
+        user.setPassword(password);
+        user.setRole("MAINTENANCE");
+        user.setMaintenanceTeam(team);
+        user.setActive(true);
+        return createUser(user);
+    }
+
+    public List<User> getMaintenanceUsers() {
+        return userRepository.findByRoleOrderByNameAsc("MAINTENANCE");
+    }
+
+    public User updateMaintenanceTeam(String studentId, MaintenanceTeam team) {
+        User user = findMaintenanceUser(studentId);
+        user.setMaintenanceTeam(team);
+        return userRepository.save(user);
+    }
+
+    public User updateMaintenanceAccountStatus(String studentId, boolean active) {
+        User user = findMaintenanceUser(studentId);
+        user.setActive(active);
+        return userRepository.save(user);
+    }
+
     public User getUserById(String id) {
         return userRepository.findByStudentId(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
@@ -62,9 +92,6 @@ public class UserService {
         if (updatedUser.getPassword() != null && !updatedUser.getPassword().isBlank()) {
             existingUser.setPassword(passwordEncoder.encode(updatedUser.getPassword()));
         }
-        normalizeRole(updatedUser);
-        existingUser.setRole(updatedUser.getRole());
-
         try {
             return userRepository.save(existingUser);
         } catch (DuplicateKeyException exception) {
@@ -129,5 +156,14 @@ public class UserService {
     private void normalizeRole(User user) {
         String role = user.getRole();
         user.setRole(role == null || role.isBlank() ? "STUDENT" : role.trim().toUpperCase());
+    }
+
+    private User findMaintenanceUser(String studentId) {
+        User user = userRepository.findByStudentId(studentId)
+                .orElseThrow(() -> new UserNotFoundException(studentId));
+        if (!"MAINTENANCE".equals(user.getRole())) {
+            throw new UserNotFoundException(studentId);
+        }
+        return user;
     }
 }

@@ -23,7 +23,9 @@ export default function Login() {
 
     try {
       const currentUser = await login(form);
-      const destination = currentUser?.role === 'ADMIN' ? '/admin' : '/student';
+      const destination = currentUser?.role === 'ADMIN'
+        ? '/admin'
+        : currentUser?.role === 'MAINTENANCE' ? '/maintenance' : '/student';
       navigate(location.state?.from || destination, { replace: true });
     } catch (err) {
       setError(err.message || 'Unable to sign in. Please try again.');

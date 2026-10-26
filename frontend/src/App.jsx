@@ -9,7 +9,10 @@ import AdminFeedback from './pages/AdminFeedback';
 import AdminBorrows from './pages/AdminBorrows';
 import AdminSeats from './pages/AdminSeats';
 import AdminUsers from './pages/AdminUsers';
+import AdminMaintenance from './pages/AdminMaintenance';
 import Login from './pages/Login';
+import MaintenanceDashboard from './pages/MaintenanceDashboard';
+import MaintenanceTicketDetails from './pages/MaintenanceTicketDetails';
 import NotFound from './pages/NotFound';
 import Register from './pages/Register';
 import StudentBooks from './pages/StudentBooks';
@@ -26,7 +29,10 @@ function RedirectToDefault() {
     return <Navigate to="/login" replace />;
   }
 
-  return <Navigate to={role === 'ADMIN' ? '/admin' : '/student'} replace />;
+  const destination = role === 'ADMIN'
+    ? '/admin'
+    : role === 'MAINTENANCE' ? '/maintenance' : '/student';
+  return <Navigate to={destination} replace />;
 }
 
 function AppRoutes() {
@@ -47,12 +53,18 @@ function AppRoutes() {
 
       <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
         <Route path="/admin" element={<Layout><AdminDashboard /></Layout>} />
+        <Route path="/admin/maintenance" element={<Layout><AdminMaintenance /></Layout>} />
         <Route path="/admin/books" element={<Layout><StudentBooks /></Layout>} />
         <Route path="/admin/borrows" element={<Layout><AdminBorrows /></Layout>} />
         <Route path="/admin/announcements" element={<Layout><AdminAnnouncements /></Layout>} />
         <Route path="/admin/users" element={<Layout><AdminUsers /></Layout>} />
         <Route path="/admin/seats" element={<Layout><AdminSeats /></Layout>} />
         <Route path="/admin/feedback" element={<Layout><AdminFeedback /></Layout>} />
+      </Route>
+
+      <Route element={<ProtectedRoute allowedRoles={['MAINTENANCE']} />}>
+        <Route path="/maintenance" element={<Layout><MaintenanceDashboard /></Layout>} />
+        <Route path="/maintenance/tickets/:ticketId" element={<Layout><MaintenanceTicketDetails /></Layout>} />
       </Route>
 
       <Route path="*" element={<NotFound />} />

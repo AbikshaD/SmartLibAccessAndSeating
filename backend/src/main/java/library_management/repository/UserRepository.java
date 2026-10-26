@@ -1,6 +1,7 @@
 package library_management.repository;
 
 import java.util.Optional;
+import java.util.List;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
 
@@ -11,4 +12,6 @@ public interface UserRepository extends MongoRepository<User, String> {
     Optional<User> findByEmailIgnoreCase(String email);
 
     Optional<User> findByStudentId(String studentId );
+
+    List<User> findByRoleOrderByNameAsc(String role);
 }
