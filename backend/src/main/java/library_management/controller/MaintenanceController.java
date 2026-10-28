@@ -41,13 +41,21 @@ public class MaintenanceController {
     }
 
     @PostMapping("/reports")
-    @PreAuthorize("hasRole('MAINTENANCE')")
+    @PreAuthorize("hasAnyRole('MAINTENANCE', 'STUDENT')")
     public ResponseEntity<MaintenanceTicket> reportIssue(@Valid @RequestBody ReportIssueRequest request,
             Authentication authentication) {
+        boolean isStudent = authentication.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_STUDENT"));
         MaintenanceTicket ticket = ticketService.reportIssue(authentication.getName(),
                 new MaintenanceTicketService.ReportIssueRequest(request.description(), request.floor(),
-                        request.priority()));
+                        request.priority()), isStudent);
         return ResponseEntity.created(URI.create("/maintenance/tickets/" + ticket.getId())).body(ticket);
+    }
+
+    @GetMapping("/reports/my")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<java.util.List<MaintenanceTicket>> getMyReports(Authentication authentication) {
+        return ResponseEntity.ok(ticketService.getMyReports(authentication.getName()));
     }
 
     @GetMapping("/management/tickets")
@@ -69,6 +77,12 @@ public class MaintenanceController {
         return ResponseEntity.ok(ticketService.assignTeam(ticketId, request.team()));
     }
 
+    @PutMapping("/tickets/{ticketId}/classify")
+    @PreAuthorize("hasRole('MAINTENANCE_ADMIN')")
+    public ResponseEntity<MaintenanceTicket> classifyTicket(@PathVariable String ticketId) {
+        return ResponseEntity.ok(ticketService.classifyTicket(ticketId));
+    }
+
     @GetMapping("/dashboard")
     @PreAuthorize("hasRole('MAINTENANCE')")
     public ResponseEntity<MaintenanceTicketService.Dashboard> getDashboard(Authentication authentication) {
@@ -76,7 +90,7 @@ public class MaintenanceController {
     }
 
     @GetMapping("/tickets/{ticketId}")
-    @PreAuthorize("hasAnyRole('MAINTENANCE', 'MAINTENANCE_ADMIN')")
+    @PreAuthorize("hasAnyRole('MAINTENANCE', 'MAINTENANCE_ADMIN', 'STUDENT')")
     public ResponseEntity<MaintenanceTicket> getTicket(@PathVariable String ticketId,
             Authentication authentication) {
         return ResponseEntity.ok(ticketService.getTicket(ticketId, authentication.getName(),
@@ -111,5 +125,5 @@ public class MaintenanceController {
     public record ReportIssueRequest(
             @NotBlank @Size(max = 2000) String description,
             @NotBlank @Size(max = 100) String floor,
-            @NotNull MaintenanceTicket.Priority priority) { }
+            MaintenanceTicket.Priority priority) { }
 }

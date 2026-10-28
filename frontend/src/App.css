@@ -2331,3 +2331,177 @@ th {
   line-height: 1.55;
   white-space: pre-line;
 }
+
+
+/* ── AI Classification styles ────────────────────────────────── */
+
+.status-pending_classification,
+.status-pending-classification {
+  color: #7c3aed;
+  background: #ede9fe;
+}
+
+.maintenance-pending-stat {
+  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+  border: 1px solid #c4b5fd;
+}
+
+.maintenance-pending-stat span {
+  color: #7c3aed;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.maintenance-ai-box {
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  display: grid;
+  gap: 10px;
+}
+
+.maintenance-ai-box.maintenance-pending {
+  background: #faf5ff;
+  border-color: #c4b5fd;
+}
+
+.maintenance-ai-box-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: #0369a1;
+}
+
+.maintenance-ai-box.maintenance-pending .maintenance-ai-box-title {
+  color: #7c3aed;
+}
+
+.maintenance-ai-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.maintenance-ai-facts div {
+  min-width: 0;
+}
+
+.maintenance-ai-facts.maintenance-ai-reason {
+  grid-column: 1 / -1;
+}
+
+.maintenance-ai-facts dt {
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.maintenance-ai-facts dd {
+  margin: 3px 0 0;
+  overflow-wrap: anywhere;
+}
+
+.maintenance-ai-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  background: #0ea5e9;
+  color: #fff;
+  letter-spacing: 0.02em;
+}
+
+.maintenance-ai-inline {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: #475569;
+}
+
+.maintenance-ai-reason-inline {
+  color: #64748b;
+  font-style: italic;
+  font-size: 0.82rem;
+  overflow-wrap: anywhere;
+}
+
+.maintenance-ai-reason-text {
+  margin: 0;
+  font-size: 0.83rem;
+  color: #475569;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+.maintenance-ai-pending-msg {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #7c3aed;
+}
+
+.ai-classify-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  background: #7c3aed;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  width: fit-content;
+  transition: background 0.18s ease;
+}
+
+.ai-classify-btn:hover:not(:disabled) {
+  background: #6d28d9;
+}
+
+.ai-classify-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.maintenance-ticket-action-btns {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Feedback tabs */
+.feedback-tabs {
+  margin-bottom: 16px;
+}
+
+.feedback-tabs .filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Linked ticket in feedback history */
+.feedback-linked-ticket {
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+}
+
+/* AI reason in ticket facts */
+.maintenance-ai-facts .maintenance-ai-reason {
+  grid-column: 1 / -1;
+}

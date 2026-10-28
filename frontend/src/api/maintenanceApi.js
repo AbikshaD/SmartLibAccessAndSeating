@@ -15,12 +15,22 @@ export const maintenanceApi = {
     });
   },
 
+  getMyReports() {
+    return apiRequest('/maintenance/reports/my');
+  },
+
   getAllManagementTickets() {
     return apiRequest('/maintenance/management/tickets');
   },
 
   getManagementTicket(ticketId) {
     return apiRequest(`/maintenance/management/tickets/${encodeURIComponent(ticketId)}`);
+  },
+
+  classifyTicket(ticketId) {
+    return apiRequest(`/maintenance/tickets/${encodeURIComponent(ticketId)}/classify`, {
+      method: 'PUT',
+    });
   },
 
   assignTeam(ticketId, team) {

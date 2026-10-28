@@ -37,7 +37,7 @@ public class FeedbackController {
     public ResponseEntity<Feedback> submit(@Valid @RequestBody SubmitFeedbackRequest request,
             Authentication authentication) {
         Feedback feedback = feedbackService.submit(authentication.getName(),
-                new FeedbackService.SubmitFeedbackRequest(request.category(), request.rating(), request.comment()));
+                new FeedbackService.SubmitFeedbackRequest(request.category(), request.rating(), request.comment(), request.floor()));
         return ResponseEntity.created(URI.create("/feedback/" + feedback.getId())).body(feedback);
     }
 
@@ -87,7 +87,12 @@ public class FeedbackController {
     public record SubmitFeedbackRequest(
             @NotNull Feedback.Category category,
             @jakarta.validation.constraints.Min(1) @jakarta.validation.constraints.Max(5) int rating,
-            @NotBlank @Size(max = 2000) String comment) { }
+            @NotBlank @Size(max = 2000) String comment,
+            @Size(max = 100) String floor) {
+        public SubmitFeedbackRequest(Feedback.Category category, int rating, String comment) {
+            this(category, rating, comment, null);
+        }
+    }
 
     public record RespondRequest(@NotBlank @Size(max = 2000) String response) { }
 }

@@ -23,9 +23,21 @@ SmartLibAccessAndSeating/
 3. Create a `.env` file in `frontend/` with:
    VITE_API_URL=http://localhost:8080
 
-## Backend URL
+## Backend and frontend connection
 
-The frontend reads the backend URL from `VITE_API_URL` in the frontend `.env` file. The default is `http://localhost:8080`.
+The frontend reads the backend URL from `VITE_API_URL` in `frontend/.env`. The default is `http://localhost:8080`. From the repository root, use separate terminals:
+
+```powershell
+cd backend
+# Copy backend/.env.example to backend/.env and fill in local secrets.
+.\start-local.ps1
+
+cd ../frontend
+npm install
+npm run dev
+```
+
+The backend listens on port `8080` and MongoDB is expected at `mongodb://localhost:27017`. `backend/.env` is ignored by Git; do not commit credentials. The JWT secret must remain the same when restarting the backend, otherwise existing browser tokens become invalid.
 
 ## Pages
 

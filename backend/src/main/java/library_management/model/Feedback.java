@@ -48,6 +48,7 @@ public class Feedback {
 
     private Status status;
     private String adminResponse;
+    private String maintenanceTicketId;
     private LocalDateTime createdAt;
 
     public String getId() { return id; }
@@ -64,6 +65,8 @@ public class Feedback {
     public void setStatus(Status status) { this.status = status; }
     public String getAdminResponse() { return adminResponse; }
     public void setAdminResponse(String adminResponse) { this.adminResponse = adminResponse; }
+    public String getMaintenanceTicketId() { return maintenanceTicketId; }
+    public void setMaintenanceTicketId(String maintenanceTicketId) { this.maintenanceTicketId = maintenanceTicketId; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { AlertCircle, CheckCircle2, Clock3, RefreshCw, Send, Wrench } from 'lucide-react';
+import { AlertCircle, Bot, CheckCircle2, Clock3, RefreshCw, Send, Wrench } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { maintenanceApi } from '../api/maintenanceApi';
 import { useAuth } from '../context/AuthContext';
@@ -14,6 +14,13 @@ const formatDate = (value) => {
 
 const label = (value) => value?.replaceAll('_', ' ') || 'Unknown';
 const priorities = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
+
+const AI_CATEGORY_LABEL = {
+  NETWORK: 'Network',
+  ELECTRICAL: 'Electrical',
+  IT_SUPPORT: 'IT Support',
+  HOUSEKEEPING: 'Housekeeping',
+};
 
 export default function MaintenanceDashboard() {
   const { user } = useAuth();
@@ -163,11 +170,31 @@ export default function MaintenanceDashboard() {
                   <span className={`maintenance-priority priority-${ticket.priority?.toLowerCase()}`}>
                     {ticket.priority || 'Unspecified'} priority
                   </span>
-                  <span className={`maintenance-ticket-status status-${ticket.status?.toLowerCase()}`}>
+                  <span className={`maintenance-ticket-status status-${ticket.status?.toLowerCase().replaceAll('_', '-')}`}>
                     {label(ticket.status)}
                   </span>
                 </div>
                 <p className="maintenance-ticket-description">{ticket.description}</p>
+
+                {/* AI classification metadata */}
+                {ticket.aiCategory && (
+                  <div className="maintenance-ai-inline">
+                    <Bot size={13} />
+                    <span>AI category: </span>
+                    <span className="maintenance-ai-badge">
+                      {AI_CATEGORY_LABEL[ticket.aiCategory] || ticket.aiCategory}
+                    </span>
+                    {ticket.classificationReason && (
+                      <span className="maintenance-ai-reason-inline">— {ticket.classificationReason}</span>
+                    )}
+                  </div>
+                )}
+                {ticket.assignedStaffId && (
+                  <div className="maintenance-ticket-meta">
+                    <span>Assigned staff: <strong>{ticket.assignedStaffId}</strong></span>
+                  </div>
+                )}
+
                 <div className="maintenance-ticket-meta">
                   <span>Floor: <strong>{ticket.floor}</strong></span>
                   <span>Submitted: <strong>{formatDate(ticket.submittedAt)}</strong></span>

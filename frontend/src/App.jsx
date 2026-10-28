@@ -67,9 +67,12 @@ function AppRoutes() {
         <Route path="/maintenance-admin/tickets/:ticketId" element={<Layout><MaintenanceTicketDetails /></Layout>} />
       </Route>
 
+      <Route element={<ProtectedRoute allowedRoles={['MAINTENANCE', 'MAINTENANCE_ADMIN', 'STUDENT']} />}>
+        <Route path="/maintenance/tickets/:ticketId" element={<Layout><MaintenanceTicketDetails /></Layout>} />
+      </Route>
+
       <Route element={<ProtectedRoute allowedRoles={['MAINTENANCE']} />}>
         <Route path="/maintenance" element={<Layout><MaintenanceDashboard /></Layout>} />
-        <Route path="/maintenance/tickets/:ticketId" element={<Layout><MaintenanceTicketDetails /></Layout>} />
       </Route>
 
       <Route path="*" element={<NotFound />} />

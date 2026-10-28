@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ClipboardPlus, RefreshCw, UserPlus, Users, Wrench } from 'lucide-react';
+import { Bot, ClipboardPlus, RefreshCw, UserPlus, Users, Wrench } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ErrorMessage from '../components/ErrorMessage';
 import LoadingState from '../components/LoadingState';
@@ -13,6 +13,13 @@ const teams = [
   { value: 'HOUSEKEEPING', label: 'Housekeeping' },
 ];
 const priorities = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
+
+const AI_CATEGORY_LABEL = {
+  NETWORK: 'Network',
+  ELECTRICAL: 'Electrical',
+  IT_SUPPORT: 'IT Support',
+  HOUSEKEEPING: 'Housekeeping',
+};
 
 const initialStaffForm = {
   studentId: '',
@@ -40,6 +47,7 @@ export default function AdminMaintenance() {
   const [ticketSubmitting, setTicketSubmitting] = useState(false);
   const [busyStaffId, setBusyStaffId] = useState('');
   const [busyTicketId, setBusyTicketId] = useState('');
+  const [classifyingId, setClassifyingId] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -183,7 +191,26 @@ export default function AdminMaintenance() {
     }
   };
 
+  const handleClassify = async (ticket) => {
+    setError('');
+    setSuccess('');
+    setClassifyingId(ticket.id);
+    try {
+      const updated = await maintenanceApi.classifyTicket(ticket.id);
+      setTickets((current) => current.map((entry) => (
+        entry.id === updated.id ? updated : entry
+      )));
+      setSuccess(`Ticket ${ticket.id} classified as ${AI_CATEGORY_LABEL[updated.aiCategory] || updated.aiCategory || 'Unknown'}.`);
+    } catch (err) {
+      setError(err.message || 'AI classification failed. The ticket has been preserved.');
+    } finally {
+      setClassifyingId('');
+    }
+  };
+
   if (loading) return <LoadingState message="Loading maintenance operations..." />;
+
+  const pendingCount = tickets.filter((t) => t.status === 'PENDING_CLASSIFICATION').length;
 
   return (
     <div className="page-container">
@@ -379,6 +406,12 @@ export default function AdminMaintenance() {
           <span>Resolved</span>
           <strong>{tickets.filter((ticket) => ticket.status === 'RESOLVED').length}</strong>
         </div>
+        {pendingCount > 0 && (
+          <div className="stat-card maintenance-pending-stat">
+            <span><Bot size={14} /> Pending AI review</span>
+            <strong>{pendingCount}</strong>
+          </div>
+        )}
       </div>
 
       <section className="panel-card">
@@ -407,11 +440,31 @@ export default function AdminMaintenance() {
                   <span className={`maintenance-priority priority-${ticket.priority?.toLowerCase()}`}>
                     {ticket.priority || 'Unspecified'} priority
                   </span>
-                  <span className={`maintenance-ticket-status status-${ticket.status?.toLowerCase()}`}>
+                  <span className={`maintenance-ticket-status status-${ticket.status?.toLowerCase().replaceAll('_', '-')}`}>
                     {ticket.status?.replaceAll('_', ' ') || 'Unknown'}
                   </span>
                 </div>
                 <p className="maintenance-ticket-description">{ticket.description}</p>
+
+                {/* AI classification metadata */}
+                {ticket.aiCategory && (
+                  <div className="maintenance-ai-inline">
+                    <Bot size={13} />
+                    <span>AI: </span>
+                    <span className="maintenance-ai-badge">
+                      {AI_CATEGORY_LABEL[ticket.aiCategory] || ticket.aiCategory}
+                    </span>
+                    {ticket.classificationReason && (
+                      <span className="maintenance-ai-reason-inline">— {ticket.classificationReason}</span>
+                    )}
+                  </div>
+                )}
+                {ticket.assignedStaffId && (
+                  <div className="maintenance-ticket-meta">
+                    <span>Assigned staff: <strong>{ticket.assignedStaffId}</strong></span>
+                  </div>
+                )}
+
                 <div className="maintenance-ticket-meta">
                   <span>Floor: <strong>{ticket.floor || 'Not specified'}</strong></span>
                   <span>Team: <strong>{teamLabel(ticket.team)}</strong></span>
@@ -427,9 +480,23 @@ export default function AdminMaintenance() {
                       aria-label={`Assign ticket ${ticket.id} to a team`}
                     />
                   </label>
-                  <Link className="secondary maintenance-details-link" to={`/maintenance-admin/tickets/${encodeURIComponent(ticket.id)}`}>
-                    View details
-                  </Link>
+                  <div className="maintenance-ticket-action-btns">
+                    {(ticket.status === 'PENDING_CLASSIFICATION' || !ticket.aiCategory) && (
+                      <button
+                        type="button"
+                        className="ai-classify-btn"
+                        onClick={() => handleClassify(ticket)}
+                        disabled={classifyingId === ticket.id}
+                        title="Run Groq AI classification"
+                      >
+                        <Bot size={13} />
+                        {classifyingId === ticket.id ? 'Classifying...' : 'Classify with AI'}
+                      </button>
+                    )}
+                    <Link className="secondary maintenance-details-link" to={`/maintenance-admin/tickets/${encodeURIComponent(ticket.id)}`}>
+                      View details
+                    </Link>
+                  </div>
                 </div>
               </article>
             ))}

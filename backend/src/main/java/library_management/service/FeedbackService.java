@@ -14,9 +14,11 @@ import library_management.repository.FeedbackRepository;
 public class FeedbackService {
 
     private final FeedbackRepository feedbackRepository;
+    private final MaintenanceTicketService maintenanceTicketService;
 
-    public FeedbackService(FeedbackRepository feedbackRepository) {
+    public FeedbackService(FeedbackRepository feedbackRepository, MaintenanceTicketService maintenanceTicketService) {
         this.feedbackRepository = feedbackRepository;
+        this.maintenanceTicketService = maintenanceTicketService;
     }
 
     public Feedback submit(String studentId, SubmitFeedbackRequest request) {
@@ -27,7 +29,20 @@ public class FeedbackService {
         feedback.setComment(request.comment().trim());
         feedback.setStatus(Feedback.Status.PENDING);
         feedback.setCreatedAt(LocalDateTime.now());
-        return feedbackRepository.save(feedback);
+        Feedback savedFeedback = feedbackRepository.save(feedback);
+
+        if (request.category() == Feedback.Category.FACILITIES || request.category() == Feedback.Category.CLEANLINESS) {
+            var ticket = maintenanceTicketService.createTicketFromFeedback(
+                    studentId,
+                    savedFeedback.getComment(),
+                    request.floor() != null && !request.floor().isBlank() ? request.floor() : "General Library",
+                    savedFeedback.getId()
+            );
+            savedFeedback.setMaintenanceTicketId(ticket.getId());
+            return feedbackRepository.save(savedFeedback);
+        }
+
+        return savedFeedback;
     }
 
     public List<Feedback> getMyFeedback(String studentId) {
@@ -74,5 +89,9 @@ public class FeedbackService {
         }
     }
 
-    public record SubmitFeedbackRequest(Feedback.Category category, int rating, String comment) { }
+    public record SubmitFeedbackRequest(Feedback.Category category, int rating, String comment, String floor) {
+        public SubmitFeedbackRequest(Feedback.Category category, int rating, String comment) {
+            this(category, rating, comment, null);
+        }
+    }
 }

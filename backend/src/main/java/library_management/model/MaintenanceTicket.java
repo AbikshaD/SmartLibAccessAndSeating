@@ -15,7 +15,8 @@ public class MaintenanceTicket {
     public enum Status {
         OPEN,
         IN_PROGRESS,
-        RESOLVED
+        RESOLVED,
+        PENDING_CLASSIFICATION
     }
 
     public enum Priority {
@@ -32,16 +33,20 @@ public class MaintenanceTicket {
 
     private String reportedBy;
 
+    private String feedbackId;
+
     @NotBlank
     @Size(max = 2000)
     private String description;
 
-    @NotBlank
     @Size(max = 100)
     private String floor;
 
-    @NotNull
     private Priority priority;
+
+    private String aiCategory;
+    private String classificationReason;
+    private String assignedStaffId;
 
     private Status status;
     private LocalDateTime submittedAt;
@@ -53,12 +58,20 @@ public class MaintenanceTicket {
     public void setTeam(MaintenanceTeam team) { this.team = team; }
     public String getReportedBy() { return reportedBy; }
     public void setReportedBy(String reportedBy) { this.reportedBy = reportedBy; }
+    public String getFeedbackId() { return feedbackId; }
+    public void setFeedbackId(String feedbackId) { this.feedbackId = feedbackId; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
     public String getFloor() { return floor; }
     public void setFloor(String floor) { this.floor = floor; }
     public Priority getPriority() { return priority; }
     public void setPriority(Priority priority) { this.priority = priority; }
+    public String getAiCategory() { return aiCategory; }
+    public void setAiCategory(String aiCategory) { this.aiCategory = aiCategory; }
+    public String getClassificationReason() { return classificationReason; }
+    public void setClassificationReason(String classificationReason) { this.classificationReason = classificationReason; }
+    public String getAssignedStaffId() { return assignedStaffId; }
+    public void setAssignedStaffId(String assignedStaffId) { this.assignedStaffId = assignedStaffId; }
     public Status getStatus() { return status; }
     public void setStatus(Status status) { this.status = status; }
     public LocalDateTime getSubmittedAt() { return submittedAt; }
