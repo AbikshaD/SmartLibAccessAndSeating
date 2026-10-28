@@ -49,6 +49,10 @@ public class Feedback {
     private Status status;
     private String adminResponse;
     private String maintenanceTicketId;
+    private MaintenanceTeam maintenanceCategory;
+    private MaintenanceTicket.Priority maintenancePriority;
+    private MaintenanceTicket.Status maintenanceStatus;
+    private String maintenanceClassificationReason;
     private LocalDateTime createdAt;
 
     public String getId() { return id; }
@@ -67,6 +71,14 @@ public class Feedback {
     public void setAdminResponse(String adminResponse) { this.adminResponse = adminResponse; }
     public String getMaintenanceTicketId() { return maintenanceTicketId; }
     public void setMaintenanceTicketId(String maintenanceTicketId) { this.maintenanceTicketId = maintenanceTicketId; }
+    public MaintenanceTeam getMaintenanceCategory() { return maintenanceCategory; }
+    public void setMaintenanceCategory(MaintenanceTeam maintenanceCategory) { this.maintenanceCategory = maintenanceCategory; }
+    public MaintenanceTicket.Priority getMaintenancePriority() { return maintenancePriority; }
+    public void setMaintenancePriority(MaintenanceTicket.Priority maintenancePriority) { this.maintenancePriority = maintenancePriority; }
+    public MaintenanceTicket.Status getMaintenanceStatus() { return maintenanceStatus; }
+    public void setMaintenanceStatus(MaintenanceTicket.Status maintenanceStatus) { this.maintenanceStatus = maintenanceStatus; }
+    public String getMaintenanceClassificationReason() { return maintenanceClassificationReason; }
+    public void setMaintenanceClassificationReason(String maintenanceClassificationReason) { this.maintenanceClassificationReason = maintenanceClassificationReason; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

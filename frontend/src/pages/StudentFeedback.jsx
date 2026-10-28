@@ -91,7 +91,15 @@ export default function StudentFeedback() {
         } catch {
           // non-critical
         }
-        setSuccess('Your feedback was submitted. A maintenance ticket has been automatically created and dispatched.');
+        const category = AI_CATEGORY_LABEL[created.maintenanceCategory] || created.maintenanceCategory;
+        const priority = created.maintenancePriority;
+        const status = created.maintenanceStatus;
+
+        if (category && priority && status) {
+          setSuccess(`Feedback submitted. AI classified it as ${category} with ${priority.toLowerCase()} priority. Ticket status: ${status.replaceAll('_', ' ')}.`);
+        } else {
+          setSuccess('Feedback submitted. A maintenance ticket was created and is pending AI classification.');
+        }
       } else {
         setSuccess('Your feedback was submitted.');
       }
@@ -123,10 +131,12 @@ export default function StudentFeedback() {
       });
       setMyReports((current) => [ticket, ...current]);
       setReportForm(initialReportForm);
-      const cat = AI_CATEGORY_LABEL[ticket.aiCategory] || ticket.aiCategory;
+      const category = AI_CATEGORY_LABEL[ticket.aiCategory] || ticket.aiCategory;
+      const priority = ticket.priority ? ` with ${ticket.priority.toLowerCase()} priority` : '';
+      const status = ticket.status ? ` Ticket status: ${ticket.status.replaceAll('_', ' ')}.` : '';
       setSuccess(
-        cat
-          ? `Maintenance ticket created and classified as ${cat}. Dispatched to the ${ticket.team?.replaceAll('_', ' ') || 'relevant'} team.`
+        category
+          ? `Maintenance ticket created and classified as ${category}${priority}. Dispatched to the ${ticket.team?.replaceAll('_', ' ') || 'relevant'} team.${status}`
           : 'Maintenance ticket submitted. It is pending classification by the Maintenance Admin.'
       );
     } catch (err) {
@@ -377,10 +387,23 @@ export default function StudentFeedback() {
                   <div className="maintenance-ai-inline feedback-linked-ticket">
                     <Bot size={13} />
                     <span>Maintenance ticket created</span>
-                    {item.aiCategory && (
+                    {item.maintenanceCategory && (
                       <span className="maintenance-ai-badge">
-                        {AI_CATEGORY_LABEL[item.aiCategory] || item.aiCategory}
+                        {AI_CATEGORY_LABEL[item.maintenanceCategory] || item.maintenanceCategory}
                       </span>
+                    )}
+                    {item.maintenancePriority && (
+                      <span className={`maintenance-priority priority-${item.maintenancePriority.toLowerCase()}`}>
+                        {item.maintenancePriority} priority
+                      </span>
+                    )}
+                    {item.maintenanceStatus && (
+                      <span className="maintenance-ticket-status">
+                        {item.maintenanceStatus.replaceAll('_', ' ')}
+                      </span>
+                    )}
+                    {!item.maintenanceCategory && item.maintenanceClassificationReason && (
+                      <span className="maintenance-ai-pending-msg">Pending AI classification</span>
                     )}
                     <Link
                       to={`/maintenance/tickets/${encodeURIComponent(item.maintenanceTicketId)}`}

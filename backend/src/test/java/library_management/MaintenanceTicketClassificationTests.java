@@ -226,6 +226,9 @@ class MaintenanceTicketClassificationTests {
                         .content("{\"category\":\"CLEANLINESS\",\"rating\":2,\"comment\":\"" + comment + "\",\"floor\":\"Second Floor\"}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.maintenanceTicketId").isNotEmpty())
+                .andExpect(jsonPath("$.maintenanceCategory").value("HOUSEKEEPING"))
+                .andExpect(jsonPath("$.maintenancePriority").value("MEDIUM"))
+                .andExpect(jsonPath("$.maintenanceStatus").value("OPEN"))
                 .andReturn();
 
         String ticketId = objectMapper.readTree(feedbackResult.getResponse().getContentAsString())

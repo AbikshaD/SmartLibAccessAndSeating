@@ -39,6 +39,10 @@ public class FeedbackService {
                     savedFeedback.getId()
             );
             savedFeedback.setMaintenanceTicketId(ticket.getId());
+            savedFeedback.setMaintenanceCategory(ticket.getTeam());
+            savedFeedback.setMaintenancePriority(ticket.getPriority());
+            savedFeedback.setMaintenanceStatus(ticket.getStatus());
+            savedFeedback.setMaintenanceClassificationReason(ticket.getClassificationReason());
             return feedbackRepository.save(savedFeedback);
         }
 
