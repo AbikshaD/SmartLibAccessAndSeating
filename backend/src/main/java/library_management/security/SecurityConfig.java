@@ -33,6 +33,7 @@ public class SecurityConfig {
                 .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .authorizeHttpRequests(auth -> auth
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                    .requestMatchers("/ws", "/ws/**").permitAll()
                     .requestMatchers("/auth/**").permitAll()
                     .requestMatchers(HttpMethod.POST, "/users/admin").hasRole("ADMIN")
                     .requestMatchers(HttpMethod.POST, "/users/maintenance-admin").hasRole("ADMIN")
@@ -87,6 +88,7 @@ public class SecurityConfig {
                         .hasAnyRole("MAINTENANCE", "MAINTENANCE_ADMIN", "STUDENT")
                     .requestMatchers(HttpMethod.PUT, "/maintenance/tickets/*/status")
                         .hasAnyRole("MAINTENANCE", "MAINTENANCE_ADMIN")
+                    .requestMatchers("/maintenance/notifications/**").hasRole("MAINTENANCE")
                     .requestMatchers("/maintenance/**").denyAll()
                     .requestMatchers("/users/**").authenticated()
                         .anyRequest().authenticated())

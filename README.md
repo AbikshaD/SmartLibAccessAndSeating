@@ -37,7 +37,7 @@ npm install
 npm run dev
 ```
 
-The backend listens on port `8080` and MongoDB is expected at `mongodb://localhost:27017`. `backend/.env` is ignored by Git; do not commit credentials. The JWT secret must remain the same when restarting the backend, otherwise existing browser tokens become invalid.
+The backend listens on port `8080` and MongoDB is expected at `mongodb://localhost:27017`. Spring Boot loads `backend/.env` when started from the repository root, or `.env` when started from the `backend/` directory, so Groq and other local settings are available when launching through Maven or an IDE as well as `start-local.ps1`. Restart the backend after changing `.env`; running processes do not reload configuration automatically. `.env` is ignored by Git; do not commit credentials. The JWT secret must remain the same when restarting the backend, otherwise existing browser tokens become invalid.
 
 ## Pages
 
@@ -73,3 +73,14 @@ When a confirmed booking's end time passes, the backend marks it `COMPLETED` and
 - The frontend stores the JWT in localStorage.
 - The frontend reads the JWT subject as the `studentId` and then calls `GET /users/{studentId}` to load the full user record and role.
 - Role-based route access is enforced on the frontend as a UI gate, while the backend remains the final authority.
+
+## Maintenance ticket notifications
+
+The backend persists a notification for each active, unblocked maintenance staff member on a ticket's assigned team and pushes it over STOMP for connected staff:
+
+- Connect to `ws://localhost:8080/ws` (or `wss://<backend-host>/ws`) using STOMP. Send `Authorization: Bearer <JWT>` in the STOMP `CONNECT` headers, then subscribe to `/user/queue/notifications`.
+- `GET /maintenance/notifications` returns the authenticated staff member's notifications.
+- `GET /maintenance/notifications/unread-count` returns `{ "unreadCount": <number> }`.
+- `PUT /maintenance/notifications/{notificationId}/read` marks that staff member's notification as read.
+
+These notification REST endpoints and WebSocket subscriptions require the `MAINTENANCE` role. A staff member only receives messages addressed to their own account; notifications are not broadcast across teams.

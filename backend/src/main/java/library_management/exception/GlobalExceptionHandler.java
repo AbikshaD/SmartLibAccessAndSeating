@@ -51,6 +51,12 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.NOT_FOUND, exception.getMessage());
     }
 
+    @ExceptionHandler(MaintenanceNotificationNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleMaintenanceNotificationNotFound(
+            MaintenanceNotificationNotFoundException exception) {
+        return error(HttpStatus.NOT_FOUND, exception.getMessage());
+    }
+
     @ExceptionHandler(BookNotFoundException.class)
     public ResponseEntity<Map<String, String>> handleBookNotFound(BookNotFoundException exception) {
         return error(HttpStatus.NOT_FOUND, exception.getMessage());

@@ -44,6 +44,20 @@ export const maintenanceApi = {
     return apiRequest('/maintenance/dashboard');
   },
 
+  getNotifications() {
+    return apiRequest('/maintenance/notifications');
+  },
+
+  getUnreadNotificationCount() {
+    return apiRequest('/maintenance/notifications/unread-count');
+  },
+
+  markNotificationRead(notificationId) {
+    return apiRequest(`/maintenance/notifications/${encodeURIComponent(notificationId)}/read`, {
+      method: 'PUT',
+    });
+  },
+
   getTicket(ticketId) {
     return apiRequest(`/maintenance/tickets/${encodeURIComponent(ticketId)}`);
   },

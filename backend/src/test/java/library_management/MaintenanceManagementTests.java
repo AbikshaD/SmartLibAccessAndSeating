@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import library_management.model.User;
+import library_management.repository.MaintenanceNotificationRepository;
 import library_management.repository.MaintenanceTicketRepository;
 import library_management.repository.UserRepository;
 
@@ -50,6 +51,9 @@ class MaintenanceManagementTests {
 
     @Autowired
     private MaintenanceTicketRepository ticketRepository;
+
+    @Autowired
+    private MaintenanceNotificationRepository notificationRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -90,6 +94,7 @@ class MaintenanceManagementTests {
     @AfterEach
     void cleanUp() {
         ticketRepository.deleteAll();
+        notificationRepository.deleteAll();
         userRepository.findByStudentId(adminId).ifPresent(userRepository::delete);
         userRepository.findByStudentId(maintenanceAdminId).ifPresent(userRepository::delete);
         userRepository.findByStudentId(studentId).ifPresent(userRepository::delete);
@@ -277,6 +282,45 @@ class MaintenanceManagementTests {
                 .andExpect(jsonPath("$.role").value("MAINTENANCE"))
                 .andExpect(jsonPath("$.team").value("NETWORK"))
                 .andExpect(jsonPath("$.token").isNotEmpty());
+    }
+
+    @Test
+    void ticketNotificationsAreLimitedToTheAssignedTeamAndCanBeMarkedRead() throws Exception {
+        createTicket("NETWORK", "Router outage", "Second", "HIGH");
+
+        mockMvc.perform(get("/maintenance/notifications")
+                        .header("Authorization", "Bearer " + networkToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].team").value("NETWORK"))
+                .andExpect(jsonPath("$[0].description").value("Router outage"))
+                .andExpect(jsonPath("$[0].read").value(false));
+
+        mockMvc.perform(get("/maintenance/notifications")
+                        .header("Authorization", "Bearer " + electricalToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+
+        mockMvc.perform(get("/maintenance/notifications/unread-count")
+                        .header("Authorization", "Bearer " + networkToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.unreadCount").value(1));
+
+        String notificationId = notificationRepository.findByRecipientIdOrderByCreatedAtDesc(networkId)
+                .get(0).getId();
+        mockMvc.perform(put("/maintenance/notifications/" + notificationId + "/read")
+                        .header("Authorization", "Bearer " + networkToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.read").value(true));
+
+        mockMvc.perform(get("/maintenance/notifications/unread-count")
+                        .header("Authorization", "Bearer " + networkToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.unreadCount").value(0));
+
+        mockMvc.perform(get("/maintenance/notifications")
+                        .header("Authorization", "Bearer " + studentToken))
+                .andExpect(status().isForbidden());
     }
 
     private String createTicket(String team, String description, String floor, String priority) throws Exception {

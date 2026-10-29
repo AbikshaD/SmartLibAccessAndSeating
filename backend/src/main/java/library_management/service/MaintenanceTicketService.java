@@ -22,12 +22,14 @@ public class MaintenanceTicketService {
     private final MaintenanceTicketRepository ticketRepository;
     private final UserRepository userRepository;
     private final GroqAIService groqAIService;
+    private final MaintenanceNotificationService notificationService;
 
     public MaintenanceTicketService(MaintenanceTicketRepository ticketRepository, UserRepository userRepository,
-            GroqAIService groqAIService) {
+            GroqAIService groqAIService, MaintenanceNotificationService notificationService) {
         this.ticketRepository = ticketRepository;
         this.userRepository = userRepository;
         this.groqAIService = groqAIService;
+        this.notificationService = notificationService;
     }
 
     public MaintenanceTicket createTicket(CreateTicketRequest request) {
@@ -39,7 +41,7 @@ public class MaintenanceTicketService {
         ticket.setStatus(MaintenanceTicket.Status.OPEN);
         ticket.setSubmittedAt(LocalDateTime.now());
         assignEligibleStaff(ticket, request.team());
-        return ticketRepository.save(ticket);
+        return saveAndNotify(ticket);
     }
 
     public MaintenanceTicket reportIssue(String studentId, ReportIssueRequest request) {
@@ -75,7 +77,7 @@ public class MaintenanceTicketService {
             ticket.setStatus(MaintenanceTicket.Status.OPEN);
         }
 
-        return ticketRepository.save(ticket);
+        return saveAndNotify(ticket);
     }
 
     public MaintenanceTicket createTicketFromFeedback(String studentId, String comment, String floor, String feedbackId) {
@@ -103,7 +105,7 @@ public class MaintenanceTicketService {
             ticket.setStatus(MaintenanceTicket.Status.PENDING_CLASSIFICATION);
         }
 
-        return ticketRepository.save(ticket);
+        return saveAndNotify(ticket);
     }
 
     public List<MaintenanceTicket> getMyReports(String studentId) {
@@ -125,7 +127,7 @@ public class MaintenanceTicketService {
             ticket.setStatus(MaintenanceTicket.Status.OPEN);
         }
         assignEligibleStaff(ticket, team);
-        return ticketRepository.save(ticket);
+        return saveAndNotify(ticket);
     }
 
     public MaintenanceTicket classifyTicket(String ticketId) {
@@ -139,7 +141,7 @@ public class MaintenanceTicketService {
             ticket.setClassificationReason(result.reason());
             ticket.setStatus(MaintenanceTicket.Status.OPEN);
             assignEligibleStaff(ticket, result.category());
-            return ticketRepository.save(ticket);
+            return saveAndNotify(ticket);
         }
         return ticket;
     }
@@ -188,6 +190,7 @@ public class MaintenanceTicketService {
             ticket.setAssignedStaffId(null);
             return;
         }
+
         List<User> staffMembers = userRepository.findByRoleOrderByNameAsc("MAINTENANCE").stream()
                 .filter(user -> user.getMaintenanceTeam() == team && user.isActive() && !user.isBlocked())
                 .toList();
@@ -216,6 +219,12 @@ public class MaintenanceTicketService {
         if (selectedStaff != null) {
             ticket.setAssignedStaffId(selectedStaff.getStudentId());
         }
+    }
+
+    private MaintenanceTicket saveAndNotify(MaintenanceTicket ticket) {
+        MaintenanceTicket savedTicket = ticketRepository.save(ticket);
+        notificationService.notifyAssignedTeam(savedTicket);
+        return savedTicket;
     }
 
     private MaintenanceTeam getMaintenanceTeam(String studentId) {

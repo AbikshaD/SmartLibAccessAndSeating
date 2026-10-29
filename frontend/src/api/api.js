@@ -1,5 +1,9 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
+export function getApiBaseUrl() {
+  return API_BASE_URL;
+}
+
 const normalizePath = (path) => (path.startsWith('/') ? path : `/${path}`);
 
 const getErrorMessage = (status, payload) => {
