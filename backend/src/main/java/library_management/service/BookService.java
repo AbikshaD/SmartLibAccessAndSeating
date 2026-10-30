@@ -1,10 +1,12 @@
 package library_management.service;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
@@ -101,8 +103,7 @@ public class BookService {
     @EventListener(ApplicationReadyEvent.class)
     public void seedInitialBooksIfEmpty() {
         try {
-            if (bookRepository.count() == 0) {
-                List<Book> initialBooks = List.of(
+            List<Book> initialBooks = List.of(
                     // Computer Science
                     new Book("Clean Code: A Handbook of Agile Software Craftsmanship", "Robert C. Martin",
                             "Computer Science", "978-0132350884", 2008, 5, 4, "Floor 1 - Section CS-01",
@@ -177,14 +178,117 @@ public class BookService {
                             "Nobel Laureate's tour de force on cognitive biases, decision making, and mental heuristics."),
                     new Book("Principles: Life and Work", "Ray Dalio",
                             "Business & Management", "978-1501124020", 2017, 4, 3, "Floor 3 - Section BUS-04",
-                            "Unconventional principles and systematic methods for radical truth and meaningful work.")
-                );
-                bookRepository.saveAll(initialBooks);
+                            "Unconventional principles and systematic methods for radical truth and meaningful work."),
+
+                    // Additional Computer Science
+                    new Book("Effective Java", "Joshua Bloch",
+                            "Computer Science", null, 2018, 3, 3, "Floor 1 - Section CS-06",
+                            "Practical guidance for writing robust, maintainable Java programs."),
+                    new Book("Clean Architecture", "Robert C. Martin",
+                            "Computer Science", null, 2017, 3, 3, "Floor 1 - Section CS-07",
+                            "Principles for designing software systems that remain independent of frameworks and infrastructure."),
+                    new Book("Head First Design Patterns", "Eric Freeman, Elisabeth Robson",
+                            "Computer Science", null, 2020, 3, 3, "Floor 1 - Section CS-08",
+                            "An illustrated introduction to reusable object-oriented design patterns."),
+                    new Book("Computer Networking: A Top-Down Approach", "James F. Kurose, Keith W. Ross",
+                            "Computer Science", null, 2021, 3, 3, "Floor 1 - Section CS-09",
+                            "A layered introduction to networking concepts, protocols, and applications."),
+
+                    // Additional Fiction
+                    new Book("Pride and Prejudice", "Jane Austen",
+                            "Fiction", null, 1813, 3, 3, "Floor 2 - Section FIC-06",
+                            "A classic novel about family, social expectations, and first impressions."),
+                    new Book("Frankenstein", "Mary Shelley",
+                            "Fiction", null, 1818, 3, 3, "Floor 2 - Section FIC-07",
+                            "A Gothic novel exploring scientific ambition, responsibility, and belonging."),
+                    new Book("The Hobbit", "J. R. R. Tolkien",
+                            "Fiction", null, 1937, 3, 3, "Floor 2 - Section FIC-08",
+                            "A fantasy adventure following Bilbo Baggins on a journey beyond the Shire."),
+                    new Book("The Kite Runner", "Khaled Hosseini",
+                            "Fiction", null, 2003, 3, 3, "Floor 2 - Section FIC-09",
+                            "A story of friendship, family, and redemption set across Afghanistan and the United States."),
+
+                    // Additional Science & Mathematics
+                    new Book("The Elegant Universe", "Brian Greene",
+                            "Science & Mathematics", null, 1999, 3, 3, "Floor 1 - Section SCI-05",
+                            "An accessible exploration of string theory and modern ideas in theoretical physics."),
+                    new Book("Silent Spring", "Rachel Carson",
+                            "Science & Mathematics", null, 1962, 3, 3, "Floor 1 - Section SCI-06",
+                            "A landmark account of pesticide use and its effects on ecosystems."),
+                    new Book("The Gene: An Intimate History", "Siddhartha Mukherjee",
+                            "Science & Mathematics", null, 2016, 3, 3, "Floor 1 - Section SCI-07",
+                            "A history of genetics and the science of heredity."),
+                    new Book("Introduction to Linear Algebra", "Gilbert Strang",
+                            "Science & Mathematics", null, 2016, 3, 3, "Floor 1 - Section SCI-08",
+                            "A textbook covering vectors, matrices, linear transformations, and their applications."),
+
+                    // Additional History & Philosophy
+                    new Book("The Art of War", "Sun Tzu",
+                            "History & Philosophy", null, null, 3, 3, "Floor 2 - Section HIS-05",
+                            "An ancient Chinese treatise on strategy, planning, and conflict."),
+                    new Book("The Second Sex", "Simone de Beauvoir",
+                            "History & Philosophy", null, 1949, 3, 3, "Floor 2 - Section HIS-06",
+                            "A foundational philosophical examination of women's social and historical circumstances."),
+                    new Book("The Silk Roads: A New History of the World", "Peter Frankopan",
+                            "History & Philosophy", null, 2015, 3, 3, "Floor 2 - Section HIS-07",
+                            "A global history centered on the trade routes connecting Asia, Europe, and Africa."),
+                    new Book("The Story of Philosophy", "Will Durant",
+                            "History & Philosophy", null, 1926, 3, 3, "Floor 2 - Section HIS-08",
+                            "An introduction to influential Western philosophers and their ideas."),
+
+                    // Additional Business & Management
+                    new Book("Good to Great", "Jim Collins",
+                            "Business & Management", null, 2001, 3, 3, "Floor 3 - Section BUS-05",
+                            "A study of organizational practices associated with sustained business performance."),
+                    new Book("Start with Why", "Simon Sinek",
+                            "Business & Management", null, 2009, 3, 3, "Floor 3 - Section BUS-06",
+                            "A framework for communicating purpose and inspiring teams and customers."),
+                    new Book("The Innovator's Dilemma", "Clayton M. Christensen",
+                            "Business & Management", null, 1997, 3, 3, "Floor 3 - Section BUS-07",
+                            "An analysis of disruptive innovation and the challenges it creates for established companies."),
+                    new Book("Freakonomics", "Steven D. Levitt, Stephen J. Dubner",
+                            "Business & Management", null, 2005, 3, 3, "Floor 3 - Section BUS-08",
+                            "An accessible look at how economic reasoning can reveal unexpected patterns in everyday life."),
+
+                    // Literature & Classics
+                    new Book("Things Fall Apart", "Chinua Achebe",
+                            "Literature & Classics", null, 1958, 3, 3, "Floor 2 - Section LIT-01",
+                            "A novel about Igbo society and the effects of colonial rule in Nigeria."),
+                    new Book("One Hundred Years of Solitude", "Gabriel García Márquez",
+                            "Literature & Classics", null, 1967, 3, 3, "Floor 2 - Section LIT-02",
+                            "A multigenerational story of the Buendía family and the town of Macondo."),
+                    new Book("The Odyssey", "Homer",
+                            "Literature & Classics", null, null, 3, 3, "Floor 2 - Section LIT-03",
+                            "An ancient Greek epic following Odysseus on his long journey home."),
+                    new Book("Crime and Punishment", "Fyodor Dostoevsky",
+                            "Literature & Classics", null, 1866, 3, 3, "Floor 2 - Section LIT-04",
+                            "A novel examining conscience, morality, and redemption in nineteenth-century St. Petersburg.")
+            );
+
+            Set<String> existingBooks = new HashSet<>();
+            for (Book book : bookRepository.findAll()) {
+                existingBooks.add(bookKey(book));
+            }
+
+            List<Book> missingBooks = initialBooks.stream()
+                    .filter(book -> existingBooks.add(bookKey(book)))
+                    .toList();
+            if (!missingBooks.isEmpty()) {
+                bookRepository.saveAll(missingBooks);
             }
         } catch (Exception e) {
             // Log but don't block startup
             System.err.println("Note: Could not automatically seed books (e.g. if MongoDB is not connected during build): " + e.getMessage());
         }
+    }
+
+    private String bookKey(Book book) {
+        if (book.getIsbn() != null && !book.getIsbn().isBlank()) {
+            return "isbn:" + book.getIsbn().replaceAll("[^0-9Xx]", "").toUpperCase(Locale.ROOT);
+        }
+        return "title-author:"
+                + (book.getTitle() == null ? "" : book.getTitle().trim().toLowerCase(Locale.ROOT))
+                + "|" + (book.getAuthor() == null ? "" : book.getAuthor().trim().toLowerCase(Locale.ROOT));
     }
 
     private static class GenreStatsAccumulator {

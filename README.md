@@ -45,6 +45,7 @@ The backend listens on port `8080` and MongoDB is expected at `mongodb://localho
 - `/register`
 - `/student`
 - `/student/seats`
+- `/student/recommendations`
 - `/student/profile`
 - `/admin`
 - `/admin/users`
@@ -65,6 +66,19 @@ Admins can set the maximum seat count for a supported floor with `PUT /seats/cap
 The API persists that floor's capacity and creates any missing seats up to the requested total. Repeating the same capacity does not create duplicates. Capacity values must be between 1 and 500; reducing a floor below its current seat count returns `409 Conflict`. Admins can list saved capacities with `GET /seats/capacity`.
 
 When a confirmed booking's end time passes, the backend marks it `COMPLETED` and makes its seat available again. Expiry is checked automatically every 10 seconds.
+
+The backend seeds a starter book catalog across computer science, fiction, science and mathematics, history and philosophy, business and management, and literature and classics. Catalog seeding is additive: it adds missing sample books on startup without deleting or changing existing catalog records.
+
+Students can request AI-powered catalog recommendations with `POST /books/recommendations/chat` using their JWT:
+
+```json
+{
+  "message": "Suggest beginner-level Java books",
+  "conversation": []
+}
+```
+
+The optional `conversation` array contains up to 10 earlier `{ "role": "user" | "assistant", "content": "..." }` messages for follow-up requests. The response includes a `message` and a `books` array containing only records from MongoDB, including their available-copy counts and descriptions. Groq receives the server-side `GROQ_API_KEY`; it is never sent to the frontend. An empty catalog returns no recommendations, and provider or invalid-response errors are surfaced to the client.
 
 ## Authentication flow
 

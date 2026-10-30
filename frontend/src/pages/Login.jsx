@@ -53,7 +53,7 @@ export default function Login() {
 
         <form className="auth-form" onSubmit={handleSubmit}>
           <label>
-            Student ID
+            USER ID
             <input
               type="text"
               name="studentId"

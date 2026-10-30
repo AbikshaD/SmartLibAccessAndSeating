@@ -1,4 +1,4 @@
-import { Armchair, BarChart3, BookOpen, ClipboardList, LayoutGrid, LogOut, Megaphone, MessageSquareText, ShieldCheck, UserRound, Users, Wrench } from 'lucide-react';
+import { Armchair, BarChart3, BookOpen, Bot, ClipboardList, LayoutGrid, LogOut, Megaphone, MessageSquareText, ShieldCheck, UserRound, Users, Wrench } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -6,6 +6,7 @@ const studentLinks = [
   { to: '/student', label: 'Dashboard', icon: LayoutGrid },
   { to: '/student/seats', label: 'Seats', icon: Armchair },
   { to: '/student/books', label: 'Books', icon: BookOpen },
+  { to: '/student/recommendations', label: 'Book assistant', icon: Bot },
   { to: '/student/profile', label: 'Profile', icon: UserRound },
   { to: '/student/feedback', label: 'Feedback', icon: MessageSquareText },
 ];
@@ -49,7 +50,7 @@ export default function Sidebar() {
 
       <nav className="nav-list" aria-label="Main navigation">
         {links.map(({ to, label, icon: Icon }) => (
-          <NavLink key={to} to={to} className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+          <NavLink key={to} to={to} end={to === '/student'} className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
             <Icon size={18} />
             <span>{label}</span>
           </NavLink>

@@ -69,6 +69,7 @@ public class SecurityConfig {
                             .requestMatchers(HttpMethod.POST, "/books").hasRole("ADMIN")
                             .requestMatchers(HttpMethod.PUT, "/books/*").hasRole("ADMIN")
                             .requestMatchers(HttpMethod.DELETE, "/books/*").hasRole("ADMIN")
+                            .requestMatchers(HttpMethod.POST, "/books/recommendations/chat").hasRole("STUDENT")
                             .requestMatchers(HttpMethod.GET, "/books", "/books/**").hasAnyRole("STUDENT", "ADMIN")
                             .requestMatchers("/books/**").denyAll()
                             .requestMatchers(HttpMethod.POST, "/announcements").hasRole("ADMIN")

@@ -376,5 +376,12 @@ export const bookApi = {
       bookCount: filtered.length,
       books: filtered
     };
+  },
+
+  getRecommendations(message, conversation) {
+    return apiRequest('/books/recommendations/chat', {
+      method: 'POST',
+      body: { message, conversation },
+    });
   }
 };

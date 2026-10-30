@@ -62,6 +62,11 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.NOT_FOUND, exception.getMessage());
     }
 
+    @ExceptionHandler(BookRecommendationException.class)
+    public ResponseEntity<Map<String, String>> handleBookRecommendation(BookRecommendationException exception) {
+        return error(exception.getStatus(), exception.getMessage());
+    }
+
     @ExceptionHandler(AnnouncementNotFoundException.class)
     public ResponseEntity<Map<String, String>> handleAnnouncementNotFound(AnnouncementNotFoundException exception) {
         return error(HttpStatus.NOT_FOUND, exception.getMessage());

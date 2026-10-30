@@ -16,6 +16,7 @@ import MaintenanceTicketDetails from './pages/MaintenanceTicketDetails';
 import NotFound from './pages/NotFound';
 import Register from './pages/Register';
 import StudentBooks from './pages/StudentBooks';
+import BookRecommendationChat from './pages/BookRecommendationChat';
 import StudentDashboard from './pages/StudentDashboard';
 import StudentFeedback from './pages/StudentFeedback';
 import StudentProfile from './pages/StudentProfile';
@@ -48,6 +49,7 @@ function AppRoutes() {
         <Route path="/student" element={<Layout><StudentDashboard /></Layout>} />
         <Route path="/student/seats" element={<Layout><StudentSeats /></Layout>} />
         <Route path="/student/books" element={<Layout><StudentBooks /></Layout>} />
+        <Route path="/student/recommendations" element={<Layout><BookRecommendationChat /></Layout>} />
         <Route path="/student/profile" element={<Layout><StudentProfile /></Layout>} />
         <Route path="/student/feedback" element={<Layout><StudentFeedback /></Layout>} />
       </Route>
