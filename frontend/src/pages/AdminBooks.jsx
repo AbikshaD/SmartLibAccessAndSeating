@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import BookCard from '../components/BookCard';
+import { getApiBaseUrl } from '../api/api';
 import { bookApi } from '../api/bookApi';
 import LoadingState from '../components/LoadingState';
 import ErrorMessage from '../components/ErrorMessage';
@@ -18,7 +19,7 @@ export default function AdminBooks() {
         const [booksData, adminBorrows] = await Promise.all([
           bookApi.getAllBooks(),
           // admin endpoint returns all borrow records (including student info)
-          fetch(`${import.meta.env.VITE_API_URL}/borrows`, {
+          fetch(`${getApiBaseUrl()}/borrows`, {
             headers: {
               Authorization: `Bearer ${localStorage.getItem('smartlib_token')}`,
             },

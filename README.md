@@ -39,11 +39,11 @@ npm run dev
 
 The backend listens on port `8080` and MongoDB is expected at `mongodb://localhost:27017`. Spring Boot loads `backend/.env` when started from the repository root, or `.env` when started from the `backend/` directory, so Groq and other local settings are available when launching through Maven or an IDE as well as `start-local.ps1`. Restart the backend after changing `.env`; running processes do not reload configuration automatically. `.env` is ignored by Git; do not commit credentials. The JWT secret must remain the same when restarting the backend, otherwise existing browser tokens become invalid.
 
-## Deploying the backend to Render
+## Deploying to Render
 
-The root `render.yaml` defines the Spring Boot backend as a free Render Docker web service. Push the repository to GitHub, then create a Blueprint in Render from that repository. When prompted, enter `MONGODB_URI` from your local `backend/.env`; local `.env` files are not uploaded or read by Render. Enter `GROQ_API_KEY` if AI classification and recommendations should be enabled. Render generates `SECURITY_JWT_SECRET` for the deployment.
+The root `render.yaml` defines a free Spring Boot Docker web service and React static site. Create a Blueprint in Render from this repository to deploy both services. The frontend's `VITE_API_URL` and backend's `FRONTEND_ORIGIN` are wired to each other's Render hostnames, including REST API CORS and maintenance WebSocket origins.
 
-Create the MongoDB database in MongoDB Atlas and allow connections from Render in Atlas Network Access. Keep credentials in Render environment settings, never in the repository. When deploying the frontend later, set the backend's `FRONTEND_ORIGIN` to the frontend's `https://` Render hostname so API requests and maintenance WebSockets are allowed. Free backend services may sleep when idle; the first request after a pause can take longer.
+Enter `MONGODB_URI` from your local `backend/.env` in Render's environment settings; local `.env` files are never uploaded. Enter `GROQ_API_KEY` if AI classification and recommendations should be enabled. Render generates `SECURITY_JWT_SECRET`. Make sure MongoDB Atlas Network Access allows Render to connect. Keep credentials in Render environment settings, never in the repository. Free backend services may sleep when idle; the first request after a pause can take longer.
 
 ## Pages
 
