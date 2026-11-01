@@ -20,6 +20,11 @@ services:
           type: web
           name: smartlib-frontend
           property: host
+      - key: app.frontend-origin
+        fromService:
+          type: web
+          name: smartlib-frontend
+          property: host
 
   - type: web
     name: smartlib-frontend
